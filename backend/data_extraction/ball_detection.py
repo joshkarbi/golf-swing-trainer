@@ -3,7 +3,7 @@ Sample script to detect the location of a
 golf ball in a video clip and compute some basic metrics.
 '''
 
-from typing import List, Generator, Any, Tuple
+from typing import List, Generator, Any, Tuple, Optional
 
 import cv2
 import numpy as np
@@ -38,6 +38,34 @@ def get_video_frames(video_file_name: str) -> Generator[Image, None, None]:
         else:
             return
 
+def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, int]]:
+    """Get the (x, y) coordinates of a golf ball in an image.
+
+    X and Y coordinates are distances from top left corner of the image
+    going rightward and downward, respectively, in pixels.
+
+    Parameters
+    ----------
+    image : Image
+        Image to pull coordinates out of.
+
+    Returns
+    -------
+    Optional[Tuple[int, int]]
+        (x, y) coordinates of golf ball if detected or None.
+    """
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Detect circles in the frame.
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 100)
+    
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")    
+        
+        for (x, y, r) in circles:
+            if is_pixel_likely_part_of_golf_ball(pixel = image[y, x]):
+                return (x, y)
+    
 def get_sequence_of_golf_ball_locations(video_file_name: str) -> List[Tuple[int, int]]:
     """Analyze a video sequence and determine the series
     of golf ball (x, y) locations.
@@ -60,20 +88,10 @@ def get_sequence_of_golf_ball_locations(video_file_name: str) -> List[Tuple[int,
     result = []
 
     for image in get_video_frames(video_file_name=video_file_name):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        coordinates = get_coordinates_of_golf_ball_in_image(image = image)
+        if coordinates:
+            result.append(coordinates)
 
-        # Detect circles in the frame.
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1.2, 100)
-
-        if circles is not None:
-            
-            circles = np.round(circles[0, :]).astype("int")
-            for (x, y, r) in circles:
-            
-                if is_pixel_likely_part_of_golf_ball(pixel = image[y, x]):
-
-                    result.append((x, y))
-    
     return result
 
 def moving_average(x, w):
