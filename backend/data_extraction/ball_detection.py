@@ -3,10 +3,16 @@ Sample script to detect the location of a
 golf ball in a video clip and compute some basic metrics.
 '''
 
+import time
 from typing import List, Generator, Any, Tuple, Optional
+from enum import Enum
 
 import cv2
 import numpy as np
+
+class BallTrackingMethod(Enum):
+    HOUGH_TRANSFORM = 0
+    BLOB_DETECTION = 1
 
 def is_pixel_likely_part_of_golf_ball(pixel: List[int]):
     """Determine if a pixel is likely part of a golf ball.
@@ -38,21 +44,8 @@ def get_video_frames(video_file_name: str) -> Generator[Image, None, None]:
         else:
             return
 
-def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, int]]:
-    """Get the (x, y) coordinates of a golf ball in an image.
-
-    X and Y coordinates are distances from top left corner of the image
-    going rightward and downward, respectively, in pixels.
-
-    Parameters
-    ----------
-    image : Image
-        Image to pull coordinates out of.
-
-    Returns
-    -------
-    Optional[Tuple[int, int]]
-        (x, y) coordinates of golf ball if detected or None.
+def find_golf_ball_using_hough_transform(image: Image) -> Optional[Tuple[int, int]]:
+    """Find the golf ball using Hough circles.
     """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -63,8 +56,39 @@ def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, i
         circles = np.round(circles[0, :]).astype("int")    
         
         for (x, y, r) in circles:
-            if is_pixel_likely_part_of_golf_ball(pixel = image[y, x]):
+            print("Circle with (x, y):", (x,y), "and radius", r)
+            image = cv2.circle(image, (x,y), r, (255,0,0), 4)
+
+            if is_pixel_likely_part_of_golf_ball(pixel = image[y-1, x-1]):
                 return (x, y)
+
+def find_golf_ball_using_blob_detection(image: Image) -> Optional[Tuple[int, int]]:
+    """Find the golf ball with blob detection.
+    """
+    return None
+
+def get_coordinates_of_golf_ball_in_image(image: Image, method: BallTrackingMethod) -> Optional[Tuple[int, int]]:
+    """Get the (x, y) coordinates of a golf ball in an image.
+
+    X and Y coordinates are distances from top left corner of the image
+    going rightward and downward, respectively, in pixels.
+
+    Parameters
+    ----------
+    image : Image
+        Image to pull coordinates out of.
+    method: BallTrackingMethod
+        Method used to detect the golf ball.
+
+    Returns
+    -------
+    Optional[Tuple[int, int]]
+        (x, y) coordinates of golf ball if detected or None.
+    """
+    if method == BallTrackingMethod.HOUGH_TRANSFORM:
+        return find_golf_ball_using_hough_transform(image = image)
+    elif method == BallTrackingMethod.BLOB_DETECTION:
+        return find_golf_ball_using_blob_detection(image = image)
     
 def get_sequence_of_golf_ball_locations(video_file_name: str) -> List[Tuple[int, int]]:
     """Analyze a video sequence and determine the series
@@ -88,7 +112,10 @@ def get_sequence_of_golf_ball_locations(video_file_name: str) -> List[Tuple[int,
     result = []
 
     for image in get_video_frames(video_file_name=video_file_name):
+
         coordinates = get_coordinates_of_golf_ball_in_image(image = image)
+        print("Found coordinates of ball:", coordinates)
+
         if coordinates:
             result.append(coordinates)
 

@@ -8,6 +8,7 @@ authors = ["Josh Karbi", "Chelsea Fernandes", "Ola Mumot", "Cyriac Jinson"]
 python = ">= 3.7, <= 3.9"
 opencv-python = "^4.5.4"
 imutils = "^0.5.4"
+imageio = "^2.13.5"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

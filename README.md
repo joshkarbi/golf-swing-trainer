@@ -1,4 +1,5 @@
 # golf-swing-trainer
+An app that analyzes user golf swings and provides useful feedback.
 
 ## How do I get setup? ##
 - Have Python 3.7, 3.8 or 3.9 installed.
