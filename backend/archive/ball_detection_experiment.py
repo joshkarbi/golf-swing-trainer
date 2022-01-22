@@ -4,7 +4,7 @@ import numpy as np
 
 ### CREATE MASK OF IMAGE HIGHLIGHTING WHITE/GRAY REGIONS ###
 
-im = cv2.imread("assets/swing_frame_2.png")
+im = cv2.imread("assets/ball_close_up.jpg")
 cv2.imshow("Original", im)
 im = cv2.GaussianBlur(im, (3, 3), 0)
 im = cv2.inRange(im, (180, 180, 180), (255,255,255))
@@ -15,7 +15,7 @@ cv2.imshow("Blurred, Masked, and Inverted", im)
 
 params = cv2.SimpleBlobDetector_Params()
 
-params.filterByCircularity = True
+params.filterByCircularity = False
 params.minCircularity = 0.9
 
 # params.minThreshold = 250
