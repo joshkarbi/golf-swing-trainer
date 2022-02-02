@@ -3,12 +3,9 @@ Sample script to detect the location of a
 golf ball in a video clip and compute some basic metrics.
 '''
 
-import time
-from typing import List, Generator, Any, Tuple, Optional
-from enum import Enum
+from typing import Any, Tuple, Optional
 
 import cv2
-import numpy as np
 
 Image = Any
 

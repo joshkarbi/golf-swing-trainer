@@ -5,6 +5,7 @@ import cv2
 import pandas as pd
 
 from .ball_detection import get_coordinates_of_golf_ball_in_image
+from .pose_detection import get_body_part_positions_in_image
 
 class GolfSwingVideoFrameInfo(NamedTuple):
     """Info from 1 frame in a golf swing video.
@@ -17,6 +18,41 @@ class GolfSwingVideoFrameInfo(NamedTuple):
 
     ball_x: int
     ball_y: int
+
+    nose_x: float
+    nose_y: float 
+    left_eye_x: float
+    left_eye_y: float
+    right_eye_x: float
+    right_eye_y: float
+    left_ear_x: float
+    left_ear_y: float
+    right_ear_x: float
+    right_ear_y: float
+    left_shoulder_x: float
+    left_shoulder_y: float
+    right_shoulder_x: float
+    right_shoulder_y: float
+    left_elbow_x: float
+    left_elbow_y: float
+    right_elbow_x: float
+    right_elbow_y: float
+    left_wrist_x: float
+    left_wrist_y: float
+    right_wrist_x: float
+    right_wrist_y: float
+    left_hip_x: float
+    left_hip_y: float
+    right_hip_x: float
+    right_hip_y: float
+    left_knee_x: float
+    left_knee_y: float
+    right_knee_x: float
+    right_knee_y: float
+    left_ankle_x: float
+    left_ankle_y: float
+    right_ankle_x: float
+    right_ankle_y: float
 
 Image = Any
 def get_video_frames(video_file_name: str) -> Generator[Tuple[Image, float], None, None]:
@@ -71,7 +107,8 @@ def analyze_video(video_file_name: str) -> pd.DataFrame:
                 video_width=width,
                 video_height=height,
                 ball_x=ball_x,
-                ball_y=ball_y
+                ball_y=ball_y,
+                **get_body_part_positions_in_image(image = image)
             )
         )
 
