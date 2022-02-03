@@ -128,6 +128,3 @@ def get_body_part_positions_in_image(image: Image) -> Dict[BodyPartLabel, PixelC
 
   return res
 
-image = cv2.imread("assets/swing_frame_1.png")
-res = get_body_part_positions_in_image(image)
-print(res)
