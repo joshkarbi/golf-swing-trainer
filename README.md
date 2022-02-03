@@ -20,7 +20,10 @@ Contains backend API which conducts swing analysis.
 - Install dependencies with `poetry install`
 
 #### How do I run the tests? ###
-Assuming you're running `python3.8` in your virtualenv:
+```bash
+pytest
+```
+or (assuming you're running python3.8 in your environment):
 
 ```bash
 python3.8 -m pytest
