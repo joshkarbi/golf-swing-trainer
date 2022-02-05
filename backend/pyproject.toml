@@ -14,6 +14,7 @@ tensorflow = "^2.8.0"
 tensorflow-hub = "^0.12.0"
 Flask = "^2.0.2"
 Werkzeug = "^2.0.2"
+Flask-Cors = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

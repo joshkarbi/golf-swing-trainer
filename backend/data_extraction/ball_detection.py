@@ -41,5 +41,6 @@ def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, i
 
     # Return either the found coordinates or None, None
     if keypoints:
-        return keypoints[0].pt
+        x, y = keypoints[0].pt
+        return round(x, 2), round(y, 2)
     return None, None

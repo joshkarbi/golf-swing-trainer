@@ -77,7 +77,7 @@ def get_video_frames(video_file_name: str) -> Generator[Tuple[Image, float], Non
         else:
             return
             
-def analyze_video(video_file_name: str) -> pd.DataFrame:
+def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
     """Extract data out of the video into 
     a dataframe containing the observations.
 
