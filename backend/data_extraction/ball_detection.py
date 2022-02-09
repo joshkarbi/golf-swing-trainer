@@ -3,12 +3,9 @@ Sample script to detect the location of a
 golf ball in a video clip and compute some basic metrics.
 '''
 
-import time
-from typing import List, Generator, Any, Tuple, Optional
-from enum import Enum
+from typing import Any, Tuple, Optional
 
 import cv2
-import numpy as np
 
 Image = Any
 
@@ -44,5 +41,6 @@ def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, i
 
     # Return either the found coordinates or None, None
     if keypoints:
-        return keypoints[0].pt
+        x, y = keypoints[0].pt
+        return round(x, 2), round(y, 2)
     return None, None
