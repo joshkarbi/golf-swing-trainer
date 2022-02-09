@@ -7,6 +7,7 @@ This file will generate some dummy data for these positions and perform the calc
 
 '''
 
+from typing import NamedTuple
 import pandas as pd
 from tomlkit import string
 
@@ -26,7 +27,7 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     arm_pos_success: bool
     arm_pos_feedback: string
 
-vid_analysis_df = pd.read_csv('debug_data_extraction.csv')
+vid_analysis_df = pd.read_csv('data_extraction.csv')
 
 def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     '''
