@@ -9,7 +9,6 @@ This file will generate some dummy data for these positions and perform the calc
 
 from typing import NamedTuple
 import pandas as pd
-from tomlkit import string
 
 class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     ball_speed: int
@@ -22,24 +21,29 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
         when returning feedback to user, only messages corresponding to false success will appear
     '''
     shoulder_feet_pos_success: bool
-    shoulder_feet_pos_feedback: string
+    shoulder_feet_pos_feedback: str
 
     arm_pos_success: bool
-    arm_pos_feedback: string
+    arm_pos_feedback: str
 
 vid_analysis_df = pd.read_csv('data_extraction.csv')
 
 def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
+
+    feedback = []
+
     '''
     Input is the csv generated from video analysis,
     output will result in df including metrics, and feedback for body positions 
     TODO: score shot based on quality of feedback acchieved 
     '''
     feedback = []
-    ball_speed_metrics = []
-    shoulder_feet_pos_metrics = []
-    arm_pos_metrics = []
+    calculation_metrics = []
 
+    prev_ball_x = None
+    prev_ball_y = None
+    prev_ball_timestamp = 0
+    ball_in_motion = 0
 
     for index, row in vid_analysis_df.iterrows():
 
@@ -49,71 +53,115 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
             need to determine original position of ball (account for noise)
             as well as when ball starts drastically changing position (in flight)
             gather first few positions and timetamps of ball in impact and estimate speed
-            TODO: actual calc for ball speed
+
+            X and Y coordinates are distances from top left corner of the image
+            going rightward and downward, respectively, in pixels.
         '''
 
-        #append if not null
-        ball_speed_metrics.append([row['timestamp'], row['ball_x'],row['ball_y']])
+        if str(row['ball_x']) != 'nan' and str(row['ball_y']) != 'nan':
+            '''TODO: ball_in_metrics list should only include timestamps and body positions
+                at ball_stationary_timestamp, ball_in_motion_timestamp and next two timestamps over
 
-        #once enough points are captured to determine speed, call function
-        ball_speed = ball_speed_calculation(ball_speed_metrics)
-
-
-        '''Launch Angle Calculation
-            angle of ball relative to ground after its been hit
-            for now just estimate ground position (x amount of pixels lower than ball)
-            TODO: actual calc for ball speed
-        '''
-        ground_pos_y = row['ball_y'] - 20
-        launch_angle = launch_angle_calculation(ball_speed, ground_pos_y)
-
-
-        '''Feet/Shoulder Position Feedback
-            four types of feet stances, each corresponds to different shot type:
-                - wide (inside of feet align with outside of shoulders)
-                - normal (feet and shoulder width equal distance)
-                - narrow (outside of feet align with outside of shoulder)
-                - very narrow (feet almost toching)
-
-            check if position of feet is outside a range of shoulder position, can provide feedback if feet are too wide
-            ref: https://www.golfdistillery.com/swing-tips/setup-address/feet-position/
-        '''
-
-        #append position before shot, timestamp of when ball starts moving will be the final metric we need here
-        shoulder_feet_pos_metrics.append([row['timestamp'], row['right_shoulder_x'], row['left_shoulder_x'], row['right_ankle_x'], row['left_ankle_x']])
-
-        shoulder_feet_pos_feedback = shoulder_feet_pos_feedback(shoulder_feet_pos_metrics)
-    
-        '''Arm Position Feedback
-            Determine accuracy of arm position (the leading arm in the shot)
-            Four main sections:
-                - address
-                - backswing
-                - downswing
-                - followthrough
-            I guess it's necessary to keep track of most of these positions as the entire swing itself is a constant moevement 
-            ref: https://theleftrough.com/right-arm-in-golf-swing/
-        '''
-
-        arm_pos_metrics.append([row['timestamp'], row['left_shoulder_x'], row['left_shoulder_y'], row['right_shoulder_x'], row['right_shoulder_y'], 
+                Calculation metrics list will be used for all calcultions, 
+                we only care about any positioning before and at the shot itself
+            '''
+            calculation_metrics.append([row['timestamp'], row['ball_x'],row['ball_y'], row['nose_x'], row['nose_y'], 
+            row['left_eye_x'], row['left_eye_y'], row['right_eye_x'], row['right_eye_y'],
+            row['left_ear_x'], row['left_ear_y'], row['right_ear_x'], row['right_ear_y'],
+            row['left_shoulder_x'], row['left_shoulder_y'], row['right_shoulder_x'], row['right_shoulder_y'],
             row['left_elbow_x'], row['left_elbow_y'], row['right_elbow_x'], row['right_elbow_y'],
-            row['left_wrist_x'], row['left_wrist_y'], row['right_wrist_x'], row['right_wrist_y']])
-        
-        #call this once we have all the arm position metrics we need, just adding here as reference 
-        arm_pos_feedback = arm_pos_feedback(arm_pos_metrics)
+            row['left_wrist_x'], row['left_wrist_y'], row['right_wrist_x'], row['right_wrist_y'],
+            row['left_hip_x'], row['left_hip_y'], row['right_hip_x'], row['right_hip_y'],
+            row['left_knee_x'], row['left_knee_y'], row['right_knee_x'], row['right_knee_y'],
+            row['left_ankle_x'], row['left_ankle_y'], row['right_ankle_x'], row['right_ankle_y']
+            ])
 
-def ball_speed_calculation(ball_speed_data):
-    '''return ball speed '''
+            '''Saves the timestamp when ball first begins to displace'''
+            if prev_ball_x !=None and prev_ball_y !=None:
+                x_disp = row['ball_x'] - prev_ball_x
+                y_disp = row['ball_y'] - prev_ball_y
+                if x_disp > 10 and y_disp < 10 and ball_in_motion == 0:
+                    ball_in_motion_timestamp = row['timestamp']
+                    ball_in_motion_index = index
+                    ball_stationary_timestamp = prev_ball_timestamp
+                    ball_in_motion = 1
 
-def launch_angle_calculation(ball_speed, ground_pos):
-    '''return launch angle based on ball speed '''
+            prev_ball_x = row['ball_x']
+            prev_ball_y = row['ball_y']
+            prev_ball_timestamp = row['timestamp']
 
-def shoulder_feet_pos_feedback(pos_data): 
-    '''Determine if feet position is satisfactory, return tailored feedback message if not 
-        shoulder_diff = right_shoulder_x - left_shoulder_x
-        ankle_diff = right_ankle_x - left_ankle_x
-    
+
+    ball_speed = ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    #sending random temp pixel position for ground 
+    launch_angle = launch_angle_calculation(ball_speed, 445)
+
+    shoulder_feet_pos_feedback_msg = shoulder_feet_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+
+    '''If shoulder_feet_pos_feedback_msg returns a message, user has incorrect positioning'''
+    if shoulder_feet_pos_feedback_msg:
+        shoulder_feet_pos_success = False
+    else:
+        shoulder_feet_pos_success = True
+
+    arm_pos_feedback_msg = arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    '''If arm_pos_feedback_msg returns a message, user has incorrect positioning'''
+    if arm_pos_feedback_msg:
+        arm_pos_success = False
+    else:
+        arm_pos_success = True
+
+    feedback.append(
+        GolfSwingFeedbackInfoAndMetrics(
+            ball_speed=ball_speed,
+            launch_angle=launch_angle,
+            shoulder_feet_pos_success=shoulder_feet_pos_success,
+            shoulder_feet_pos_feedback=shoulder_feet_pos_feedback_msg,
+            arm_pos_success=arm_pos_success,
+            arm_pos_feedback=arm_pos_feedback_msg
+        )
+    )
+
+    # res = pd.DataFrame(feedback)
+    # res.to_csv("golf_swing_feedback.csv", na_rep='NULL')
+    # return res
+
+def ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    '''Return ball speed, reference to timestamp of the ball before and immediately after impact
+        TODO: calculate ball speed 
     '''
 
-def arm_pos_feedback(pos_data):
-    '''Determine if arm position is satisfactory, return tailored feedback message if not '''
+def launch_angle_calculation(ball_speed, ground_pos):
+    '''Launch Angle Calculation
+        angle of ball relative to ground after its been hit
+        for now just estimate ground position (x amount of pixels lower than ball)
+        TODO: actual calc for ball speed
+    '''
+
+def shoulder_feet_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp): 
+        '''Feet/Shoulder Position Feedback
+            check if position of feet is outside a range of shoulder position, can provide feedback if feet are too wide
+            ref: https://www.golfdistillery.com/swing-tips/setup-address/feet-position/
+
+        '''
+
+def arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    '''Determine if arm position is satisfactory, return tailored feedback message if not 
+        We can keep track of a few points in this calculation.
+        Firstly, leftmost x values for wrist position determine the start of the swing motion
+            -check if wrist/elbow/shoulder pos is accurate
+        Secondly, the largest y value for wrist position will determine about the area 
+            where the golf ball is liekly hit.
+        
+        We can use the timestamp of the ball before/after motion to estimate a more precice location
+        for the body during ball impact, and can check the positioning at a few timestamps
+        before/after the hit
+
+    '''
+
+def knee_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    '''Check if players knees are bent appropriately'''
+
+def shoulder_motion_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    '''Check motion of shoulders during golf swing'''
+
+analyze_datapoints(vid_analysis_df)
