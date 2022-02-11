@@ -30,6 +30,7 @@ dependencies:
   flutter:
     sdk: flutter
   camera:
+  http:
   path_provider:
   path:
   video_player:
