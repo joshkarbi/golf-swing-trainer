@@ -10,6 +10,7 @@ This file will generate some dummy data for these positions and perform the calc
 from sqlite3 import Timestamp
 from typing import NamedTuple
 import pandas as pd
+from math import atan
 
 class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     ball_speed: int
@@ -23,7 +24,12 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     '''
     shoulder_feet_pos_success: bool
     shoulder_feet_pos_feedback: str
-
+    shoulder_metrics={}
+    elbow_metrics={}
+    wrist_metrics={}
+    hip_metrics={}
+    knee_metrics={}
+    
     arm_pos_success: bool
     arm_pos_feedback: str
 
@@ -40,12 +46,7 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     '''
     feedback = []
     calculation_metrics = []
-    shoulder_metrics={}
-    elbow_metrics={}
-    wrist_metrics={}
-    foot_metrics={}
-    knee_metrics={}
-
+    metrics = GolfSwingFeedbackInfoAndMetrics()
     prev_ball_x = None
     prev_ball_y = None
     prev_ball_timestamp = 0
@@ -71,27 +72,42 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
                 Calculation metrics list will be used for all calcultions, 
                 we only care about any positioning before and at the shot itself
             '''
-            shoulder_metrics[row['timestamp']] =[row['left_shouder_x'],
+            metrics.shoulder_metrics[row['timestamp']] =[row['left_shouder_x'],
                                                 row['left_shouder_y'],
                                                 row['right_shouder_x'],
                                                 row['right_shouder_y']]
 
-            shoulder_metrics[row['timestamp']] =[row['left_elbow_x'],
+            metrics.elbow_metrics[row['timestamp']] =[row['left_elbow_x'],
                                                 row['left_elbow_y'],
                                                 row['right_elbow_x'],
                                                 row['right_elbow_y']]
+
+            metrics.wrist_metrics[row['timestamp']] =[row['left_wrist_x'],
+                                                row['left_wrist_y'],
+                                                row['right_wrist_x'],
+                                                row['right_wrist_y']]
+
+            metrics.hip_metrics[row['timestamp']] =[row['left_hip_x'],
+                                                row['left_hip_y'],
+                                                row['right_hip_x'],
+                                                row['right_hip_y']]
+
+            metrics.knee_metrics[row['timestamp']] =[row['left_knee_x'],
+                                                row['left_knee_y'],
+                                                row['right_knee_x'],
+                                                row['right_knee_y']]
             
 
-            calculation_metrics.append([row['timestamp'], row['ball_x'],row['ball_y'], row['nose_x'], row['nose_y'], 
-            row['left_eye_x'], row['left_eye_y'], row['right_eye_x'], row['right_eye_y'],
-            row['left_ear_x'], row['left_ear_y'], row['right_ear_x'], row['right_ear_y'],
-            row['left_shoulder_x'], row['left_shoulder_y'], row['right_shoulder_x'], row['right_shoulder_y'],
-            row['left_elbow_x'], row['left_elbow_y'], row['right_elbow_x'], row['right_elbow_y'],
-            row['left_wrist_x'], row['left_wrist_y'], row['right_wrist_x'], row['right_wrist_y'],
-            row['left_hip_x'], row['left_hip_y'], row['right_hip_x'], row['right_hip_y'],
-            row['left_knee_x'], row['left_knee_y'], row['right_knee_x'], row['right_knee_y'],
-            row['left_ankle_x'], row['left_ankle_y'], row['right_ankle_x'], row['right_ankle_y']
-            ])
+            # calculation_metrics.append([row['timestamp'], row['ball_x'],row['ball_y'], row['nose_x'], row['nose_y'], 
+            # row['left_eye_x'], row['left_eye_y'], row['right_eye_x'], row['right_eye_y'],
+            # row['left_ear_x'], row['left_ear_y'], row['right_ear_x'], row['right_ear_y'],
+            # row['left_shoulder_x'], row['left_shoulder_y'], row['right_shoulder_x'], row['right_shoulder_y'],
+            # row['left_elbow_x'], row['left_elbow_y'], row['right_elbow_x'], row['right_elbow_y'],
+            # row['left_wrist_x'], row['left_wrist_y'], row['right_wrist_x'], row['right_wrist_y'],
+            # row['left_hip_x'], row['left_hip_y'], row['right_hip_x'], row['right_hip_y'],
+            # row['left_knee_x'], row['left_knee_y'], row['right_knee_x'], row['right_knee_y'],
+            # row['left_ankle_x'], row['left_ankle_y'], row['right_ankle_x'], row['right_ankle_y']
+            # ])
 
             '''Saves the timestamp when ball first begins to displace'''
             if prev_ball_x !=None and prev_ball_y !=None:
@@ -120,7 +136,7 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     else:
         shoulder_feet_pos_success = True
 
-    arm_pos_feedback_msg = arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
     
     '''If arm_pos_feedback_msg returns a message, user has incorrect positioning'''
     if arm_pos_feedback_msg:
@@ -143,6 +159,17 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     # res.to_csv("golf_swing_feedback.csv", na_rep='NULL')
     # return res
 
+def calculate_angle(M1,M2):
+    PI = 3.14159265
+    angle = abs((M2 - M1) / (1 + M1 * M2))
+
+    # Calculate tan inverse of the angle
+    ret = atan(angle)
+
+    # Convert the angle from radian to degree
+    return((ret * 180) / PI)
+
+
 def ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Return ball speed, reference to timestamp of the ball before and immediately after impact
         TODO: calculate ball speed 
@@ -156,20 +183,48 @@ def launch_angle_calculation(ball_speed, ground_pos):
     '''
 
 def shoulder_feet_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp): 
+
         '''Feet/Shoulder Position Feedback
             check if position of feet is outside a range of shoulder position, can provide feedback if feet are too wide
             ref: https://www.golfdistillery.com/swing-tips/setup-address/feet-position/
 
         '''
 
-def arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    
+    
     'first lets focus on getting measurements just before ball impact'
-    arm_position_metrics = []
     time_stamp=ball_stationary_timestamp
-    while(time_stamp != ball_in_motion_timestamp):
-        arm_position_metrics.append()
+    leftShoulderX = metrics.shoulder_metrics[time_stamp][0]
+    leftShoulderY=metrics.shoulder_metrics[time_stamp][1]
+    rightShoulderX=metrics.shoulder_metrics[time_stamp][2]
+    rightShoulderY=metrics.shoulder_metrics[time_stamp][3]
+    leftElbowX=metrics.elbow_metrics[time_stamp][0]
+    leftElbowY=metrics.elbow_metrics[time_stamp][1]
+    rightElbowX=metrics.elbow_metrics[time_stamp][2]
+    rightElbowY=metrics.elbow_metrics[time_stamp][3]
+    leftHandX=metrics.hand_metrics[time_stamp][0]
+    leftHandY=metrics.hand_metrics[time_stamp][1]
+    rightHandX=metrics.hand_metrics[time_stamp][2]
+    rightHandY=metrics.hand_metrics[time_stamp][3]
 
-    'once we have that lets get measurements for before the swing (initial stance)'
+
+    #calculate slope
+    M1 = abs((leftShoulderX-leftElbowX)/(leftShoulderY-leftElbowY))
+    M2 = abs((leftElbowX-leftHandX)/(leftElbowY-leftHandY))
+    leftArmAngle = calculate_angle(M1,M2)
+    
+    N1 = abs((rightShoulderX-rightElbowX)/(rightShoulderY-rightElbowY))
+    N2 = abs((rightElbowX-rightHandX)/(rightShoulderY-rightHandY))
+    rightArmAngle = calculate_angle(N1,N2)
+
+    print(leftArmAngle)
+    #if the arm isn't straight enough, add to feedback message
+    if(leftArmAngle < 170 or rightArmAngle < 170 ):
+        #TODO: append a feedback message
+
+
+        'once we have that lets get measurements for before the swing (initial stance)'
     'can use both to give concise feedback'
     
     
@@ -186,8 +241,21 @@ def arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_station
 
     '''
 
-def knee_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+def knee_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check if players knees are bent appropriately'''
+    time_stamp=ball_stationary_timestamp
+    hipsX = metrics.hip_metrics[time_stamp][0]
+    hipsY = metrics.hip_metrics[time_stamp][1]
+    kneesX=metrics.knee_metrics[time_stamp][0]
+    kneesY=metrics.knee_metrics[time_stamp][1]
+    feetX = metrics.feet_metrics[time_stamp][0]
+    feetY = metrics.feet_metrics[time_stamp][1]
+    M1 = abs((hipsX-kneesX)/(hipsY-kneesY))
+    M2 = abs((kneesX-feetX)/(kneesY-feetY))
+    kneeAngle = calculate_angle(M1,M2)
+
+    # if(kneeAngle<170):
+    #     #TODO: append feedback message for knee angle
 
 def shoulder_motion_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check motion of shoulders during golf swing'''
