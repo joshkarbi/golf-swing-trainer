@@ -7,6 +7,7 @@ This file will generate some dummy data for these positions and perform the calc
 
 '''
 
+from sqlite3 import Timestamp
 from typing import NamedTuple
 import pandas as pd
 
@@ -39,6 +40,11 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     '''
     feedback = []
     calculation_metrics = []
+    shoulder_metrics={}
+    elbow_metrics={}
+    wrist_metrics={}
+    foot_metrics={}
+    knee_metrics={}
 
     prev_ball_x = None
     prev_ball_y = None
@@ -65,6 +71,17 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
                 Calculation metrics list will be used for all calcultions, 
                 we only care about any positioning before and at the shot itself
             '''
+            shoulder_metrics[row['timestamp']] =[row['left_shouder_x'],
+                                                row['left_shouder_y'],
+                                                row['right_shouder_x'],
+                                                row['right_shouder_y']]
+
+            shoulder_metrics[row['timestamp']] =[row['left_elbow_x'],
+                                                row['left_elbow_y'],
+                                                row['right_elbow_x'],
+                                                row['right_elbow_y']]
+            
+
             calculation_metrics.append([row['timestamp'], row['ball_x'],row['ball_y'], row['nose_x'], row['nose_y'], 
             row['left_eye_x'], row['left_eye_y'], row['right_eye_x'], row['right_eye_y'],
             row['left_ear_x'], row['left_ear_y'], row['right_ear_x'], row['right_ear_y'],
@@ -104,6 +121,7 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
         shoulder_feet_pos_success = True
 
     arm_pos_feedback_msg = arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    
     '''If arm_pos_feedback_msg returns a message, user has incorrect positioning'''
     if arm_pos_feedback_msg:
         arm_pos_success = False
@@ -145,6 +163,16 @@ def shoulder_feet_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ba
         '''
 
 def arm_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+    'first lets focus on getting measurements just before ball impact'
+    arm_position_metrics = []
+    time_stamp=ball_stationary_timestamp
+    while(time_stamp != ball_in_motion_timestamp):
+        arm_position_metrics.append()
+
+    'once we have that lets get measurements for before the swing (initial stance)'
+    'can use both to give concise feedback'
+    
+    
     '''Determine if arm position is satisfactory, return tailored feedback message if not 
         We can keep track of a few points in this calculation.
         Firstly, leftmost x values for wrist position determine the start of the swing motion
