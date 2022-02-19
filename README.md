@@ -16,7 +16,7 @@ Contains backend API which conducts swing analysis.
 - Have Python 3.8 or 3.9 installed.
 - Install poetry: https://python-poetry.org/docs/
 - Create a virtual environment with `virtualenv env/`
-- Activate the virtual environment with `source env/bin/activate`
+- Activate the virtual environment with `source env/bin/activate` (on Linux) or `.\env\Scripts\activate` (on Windows)
 - Install dependencies with `poetry install`
 
 #### How do I run the tests? ###
