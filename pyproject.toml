@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "golf-swing-trainer"
+version = "0.1.0"
+description = "Backend system for a golf swing training app."
+authors = ["Josh Karbi", "Chelsea Fernandes", "Ola Mumot", "Cyriac Jinson"]
+
+[tool.poetry.dependencies]
+python = ">= 3.8, <= 3.9.10"
+opencv-python = "^4.5.4"
+imutils = "^0.5.4"
+imageio = "^2.13.5"
+pandas = "^1.4.0"
+tensorflow = "^2.8.0"
+tensorflow-hub = "^0.12.0"
+Flask = "^2.0.2"
+Werkzeug = "^2.0.2"
+Flask-Cors = "^3.0.10"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
