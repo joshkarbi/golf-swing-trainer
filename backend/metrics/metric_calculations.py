@@ -136,7 +136,8 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     else:
         shoulder_feet_pos_success = True
 
-    arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    
+    arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_stationary_timestamp)
     
     '''If arm_pos_feedback_msg returns a message, user has incorrect positioning'''
     if arm_pos_feedback_msg:
@@ -190,7 +191,7 @@ def shoulder_feet_pos_feedback(calculation_metrics, ball_in_motion_timestamp, ba
 
         '''
 
-def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+def arm_pos_feedback(metrics, ball_stationary_timestamp):
     
     
     'first lets focus on getting measurements just before ball impact'
@@ -221,7 +222,7 @@ def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestam
     print(leftArmAngle)
     #if the arm isn't straight enough, add to feedback message
     if(leftArmAngle < 170 or rightArmAngle < 170 ):
-        #TODO: append a feedback message
+        metrics.arm_pos_feedback.append("Try straightening out your arms!")
 
 
         'once we have that lets get measurements for before the swing (initial stance)'
@@ -241,21 +242,6 @@ def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestam
 
     '''
 
-def knee_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
-    '''Check if players knees are bent appropriately'''
-    time_stamp=ball_stationary_timestamp
-    hipsX = metrics.hip_metrics[time_stamp][0]
-    hipsY = metrics.hip_metrics[time_stamp][1]
-    kneesX=metrics.knee_metrics[time_stamp][0]
-    kneesY=metrics.knee_metrics[time_stamp][1]
-    feetX = metrics.feet_metrics[time_stamp][0]
-    feetY = metrics.feet_metrics[time_stamp][1]
-    M1 = abs((hipsX-kneesX)/(hipsY-kneesY))
-    M2 = abs((kneesX-feetX)/(kneesY-feetY))
-    kneeAngle = calculate_angle(M1,M2)
-
-    # if(kneeAngle<170):
-    #     #TODO: append feedback message for knee angle
 
 def shoulder_motion_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check motion of shoulders during golf swing'''

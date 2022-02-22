@@ -4,7 +4,8 @@ including detecting the coordinates of the golf ball and
 player position information.
 '''
 
-import time 
+import time
+from backend.metrics.metric_calculations import GolfSwingFeedbackInfoAndMetrics 
 
 import cv2
 import pytest
@@ -141,4 +142,11 @@ def test_pose_detection_performance():
     # Max 33 ms allowed per frame.
     # A 10 second video uploaded by a user 
     # (shot at 30 fps) will take 10 seconds to analyze.
-    assert end - start < 0.0333
+    assert end - start < 0.
+    
+
+def test_arm_pos_feedback_message():
+    test_image = cv2.imread("assets/swing_frame_1.png")
+    pose_info = get_body_part_positions_in_image(
+        image=test_image
+    )
