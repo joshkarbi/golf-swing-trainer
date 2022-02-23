@@ -10,7 +10,7 @@ This file will generate some dummy data for these positions and perform the calc
 from sqlite3 import Timestamp
 from typing import NamedTuple
 import pandas as pd
-from math import atan
+from math import atan, sqrt
 
 class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     ball_speed: int
@@ -39,13 +39,13 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     output will result in df including metrics, and feedback for body positions 
     TODO: score shot based on quality of feedback acchieved'''
 
-    feedback = []
-    calculation_metrics = []
     metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
     prev_ball_x = None
     prev_ball_y = None
     prev_ball_timestamp = 0
     ball_in_motion = 0
+    body_starting_pos_timestamp = 0
+    ball_in_motion_timestamp = 0
 
     for index, row in vid_analysis_df.iterrows():
 
@@ -87,13 +87,24 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
                 y_disp = row['ball_y'] - prev_ball_y
                 if x_disp > 10 and y_disp < 10 and ball_in_motion == 0:
                     ball_in_motion_timestamp = row['timestamp']
-                    #ball_in_motion_index = index
                     ball_stationary_timestamp = prev_ball_timestamp
                     ball_in_motion = 1
 
             prev_ball_x = row['ball_x']
             prev_ball_y = row['ball_y']
             prev_ball_timestamp = row['timestamp']
+
+        '''Find stationary body position before shot
+            TODO: this will likely need to be altered depending on various other videos we want to feed in,
+            right now we are checking for a straight shoulder position, a high y direction wrist value and 
+            a high y direction nose value'''
+        y_shoulder_disp = row['left_shoulder_y'] - row['right_shoulder_y']
+        max_wrist_disp = row['right_wrist_y'] - vid_analysis_df['right_wrist_y'].max()
+        max_nose_disp = row['nose_y'] - vid_analysis_df['nose_y'].max()
+        if abs(y_shoulder_disp) < 10 and abs(max_wrist_disp) < 10 and abs(max_nose_disp) < 10 and body_starting_pos_timestamp == 0:
+            body_starting_pos_timestamp = row['timestamp']
+            #print('timstamp: ', body_starting_pos_timestamp)
+
 
 
     '''TODO: ball speed calculation'''
@@ -103,9 +114,11 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     launch_angle = launch_angle_calculation(ball_speed, 445)
 
     '''TODO: shoulder position calculation'''
-    feet_pos_feedback_msg = feet_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    feet_pos_feedback_msg = feet_pos_feedback(metrics, ball_in_motion_timestamp, body_starting_pos_timestamp)
 
-    arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp)
+    arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_in_motion_timestamp, body_starting_pos_timestamp)
+
+    hand_pos_feedback_msg = hand_position_feedback(metrics, body_starting_pos_timestamp)
 
     # metrics.ball_speed = ball_speed
     # metrics.launch_angle = launch_angle
@@ -127,6 +140,9 @@ def calculate_angle(M1,M2):
     # Convert the angle from radian to degree
     return((ret * 180) / PI)
 
+def calculate_line_length(X1, Y1, X2, Y2):
+    d = pow((X2-X1),2) + pow((Y2-Y1),2)
+    return sqrt(d)
 
 def ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Return ball speed, reference to timestamp of the ball before and immediately after impact
@@ -137,32 +153,33 @@ def ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_s
 def launch_angle_calculation(ball_speed, ground_pos):
     '''Launch Angle Calculation
         angle of ball relative to ground after its been hit
-        for now just estimate ground position (x amount of pixels lower than ball)
-        TODO: actual calc for ball speed
+        TODO: actual calc for ball speed, determine ground position 
     '''
     return 10
 
-def feet_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp): 
-
-    '''check if position of feet is outside a range of shoulder position, can provide feedback if feet are too wide
-        ref: https://www.golfdistillery.com/swing-tips/setup-address/feet-position/'''
+def feet_pos_feedback(metrics, ball_in_motion_timestamp, body_starting_pos_timestamp): 
     
     '''Check foot position right before the shot'''
-    time_stamp = ball_stationary_timestamp
+    time_stamp = body_starting_pos_timestamp
 
     leftAnkleX = metrics.ankle_metrics[time_stamp][0]
-    leftAnkleY = metrics.ankle_metrics[time_stamp][1]
     rightAnkleX = metrics.ankle_metrics[time_stamp][2]
-    rightAnkleY = metrics.ankle_metrics[time_stamp][3]
     leftShoulderX = metrics.shoulder_metrics[time_stamp][0]
-    leftShoulderY=metrics.shoulder_metrics[time_stamp][1]
+    leftShoulderY = metrics.shoulder_metrics[time_stamp][1]
     rightShoulderX=metrics.shoulder_metrics[time_stamp][2]
-    rightShoulderY=metrics.shoulder_metrics[time_stamp][3]
+    rightShoulderY = metrics.shoulder_metrics[time_stamp][3]
 
-    print('ankle positions: ', leftAnkleX, leftAnkleY, rightAnkleX, rightAnkleY)
-    print('shoulder positions: ', leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY)
+    '''calculate line length for shoulders, we can assume ankles are stationary in y position'''
+    shoulder_displacement = calculate_line_length(leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY)
+    ankle_displacement = rightAnkleX - leftAnkleX
 
+    x_position_difference = abs(shoulder_displacement) - abs(ankle_displacement)
 
+    '''TODO: more testing with various golf shots to determine more accuarate pixel estimations for good shot'''
+    if x_position_difference > 30:
+        return 'feet are too wide apart, adjust feet position to be shoulder width apart'
+    elif x_position_difference < 10:
+        return 'feet are too close together, adjust feet position to be shoulder width apart'
 
 
 def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
@@ -196,7 +213,7 @@ def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestam
     #if the arm isn't straight enough, add to feedback message
     if(leftArmAngle < 170 or rightArmAngle < 170 ):
         #TODO: append a feedback message
-        print('temp')
+        print('')
 
 def knee_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check if players knees are bent appropriately'''
@@ -214,7 +231,26 @@ def knee_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timesta
     # if(kneeAngle<170):
     #     #TODO: append feedback message for knee angle
 
-def shoulder_motion_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+def shoulder_motion_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check motion of shoulders during golf swing'''
+
+def hand_position_feedback(metrics, body_starting_pos_timestamp):
+    '''Check wrist position'''
+    time_stamp = body_starting_pos_timestamp
+
+    leftHandX=metrics.wrist_metrics[time_stamp][0]
+    leftHandY=metrics.wrist_metrics[time_stamp][1]
+    rightHandX=metrics.wrist_metrics[time_stamp][2]
+    rightHandY=metrics.wrist_metrics[time_stamp][3]
+
+    y_position_difference = leftHandY - rightHandY
+
+    if abs(y_position_difference) < 15:
+        return 'Make sure left wrist is positioned on top of right wrist'
+
+    
+
+
+
 
 analyze_datapoints(vid_analysis_df)
