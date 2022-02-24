@@ -11,12 +11,33 @@ import argparse
 from threading import Thread
 from typing import List, Dict, Optional, NamedTuple
 from uuid import uuid4
+from backend.metrics.metric_calculations import analyze_datapoints
+import pandas as pd
 
 from flask import Flask, request
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 from data_extraction.video_analysis import extract_data_out_of_video
+
+
+class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
+    
+    #metrics for ball speed and launch angle
+    metrics={}
+    '''Body Position Feedback:
+        each incorrect body position will have written feedback for what to change 
+        ex. arm position bad, tuck elbows in
+    '''
+    shoulder_metrics={}
+    elbow_metrics={}
+    wrist_metrics={}
+    hip_metrics={}
+    knee_metrics={}
+    ankle_metrics={}
+
+    #feedback dictionary for corresponding messages (arm feedback, feet, etc)
+    feedback = {}
 
 class GolfSwingAnalysisResults(NamedTuple):
     """Results provided from this API to the client.
@@ -35,7 +56,12 @@ def analyze_video(video_file_path: Optional[str] = None, video_id: Optional[str]
     # Step 1: Extract data out of the video - pose and golf ball tracking data.
     data = extract_data_out_of_video(video_file_name = video_file_path)
 
+    metrics = GolfSwingFeedbackInfoAndMetrics()
+
     # Step 2: Estimate key metrics using data.
+
+    vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
+    analyze_datapoints(vid_analysis_df,metrics)
 
     # Step 3: Use data to provide feedback on swing.
 

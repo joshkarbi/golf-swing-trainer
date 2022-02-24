@@ -12,33 +12,6 @@ from typing import NamedTuple
 import pandas as pd
 from math import atan, sqrt
 
-class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
-    ball_speed: int
-    launch_angle: int
-
-    '''Body Position Feedback:
-        each incorrect body position will have written feedback for what to change 
-        ex. arm position bad, tuck elbows in
-    '''
-    #shoulder_feet_pos_success: bool
-    # feet_pos_feedback: str
-    shoulder_metrics={}
-    elbow_metrics={}
-    wrist_metrics={}
-    hip_metrics={}
-    knee_metrics={}
-    ankle_metrics={}
-    arm_pos_feedback_msg: str
-    hand_pos_feedback_msg: str
-    feet_pos_feedback_msg: str
-    
-    #arm_pos_success: bool
-    # arm_pos_feedback: str
-
-vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
-
-metrics = GolfSwingFeedbackInfoAndMetrics(10, 10,'')
-
 def analyze_datapoints(vid_analysis_df,metrics) -> pd.DataFrame:
     '''Input is the csv generated from video analysis,
     output will result in df including metrics, and feedback for body positions 
