@@ -4,13 +4,17 @@ including detecting the coordinates of the golf ball and
 player position information.
 '''
 
-import time 
+from cgi import test
+import time
+import pandas as pd
+from metrics.metric_calculations import GolfSwingFeedbackInfoAndMetrics, analyze_datapoints, arm_pos_feedback 
 
 import cv2
 import pytest
 
 from data_extraction.ball_detection import get_coordinates_of_golf_ball_in_image
 from data_extraction.pose_detection import get_body_part_positions_in_image
+
 
 def test_ball_detection_1():
     """Test using screenshot where ball is on the ground.
@@ -141,4 +145,11 @@ def test_pose_detection_performance():
     # Max 33 ms allowed per frame.
     # A 10 second video uploaded by a user 
     # (shot at 30 fps) will take 10 seconds to analyze.
-    assert end - start < 0.0333
+    assert end - start < 0.
+    
+
+def test_arm_pos_feedback_message():
+    testObject = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+    vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
+    analyze_datapoints(vid_analysis_df,testObject)
+    assert testObject.arm_pos_feedback_msg == None

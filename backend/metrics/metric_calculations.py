@@ -21,25 +21,28 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
         ex. arm position bad, tuck elbows in
     '''
     #shoulder_feet_pos_success: bool
-    feet_pos_feedback: str
+    # feet_pos_feedback: str
     shoulder_metrics={}
     elbow_metrics={}
     wrist_metrics={}
     hip_metrics={}
     knee_metrics={}
     ankle_metrics={}
+    arm_pos_feedback_msg: str
     
     #arm_pos_success: bool
-    arm_pos_feedback: str
+    # arm_pos_feedback: str
 
-vid_analysis_df = pd.read_csv('data_extraction.csv')
+vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
 
-def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
+metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+
+def analyze_datapoints(vid_analysis_df,metrics) -> pd.DataFrame:
     '''Input is the csv generated from video analysis,
     output will result in df including metrics, and feedback for body positions 
     TODO: score shot based on quality of feedback acchieved'''
 
-    metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+    
     prev_ball_x = None
     prev_ball_y = None
     prev_ball_timestamp = 0
@@ -138,7 +141,7 @@ def calculate_angle(M1,M2):
     ret = atan(angle)
 
     # Convert the angle from radian to degree
-    return((ret * 180) / PI)
+    return(180-((ret * 180) / PI))
 
 def calculate_line_length(X1, Y1, X2, Y2):
     d = pow((X2-X1),2) + pow((Y2-Y1),2)
@@ -175,14 +178,7 @@ def feet_pos_feedback(metrics, ball_in_motion_timestamp, body_starting_pos_times
 
     x_position_difference = abs(shoulder_displacement) - abs(ankle_displacement)
 
-    '''TODO: more testing with various golf shots to determine more accuarate pixel estimations for good shot'''
-    if x_position_difference > 30:
-        return 'feet are too wide apart, adjust feet position to be shoulder width apart'
-    elif x_position_difference < 10:
-        return 'feet are too close together, adjust feet position to be shoulder width apart'
-
-
-def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
+def arm_pos_feedback(metrics, ball_stationary_timestamp):
     
     'first lets focus on getting measurements just before ball impact'
     time_stamp=ball_stationary_timestamp
@@ -208,28 +204,32 @@ def arm_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestam
     N1 = abs((rightShoulderX-rightElbowX)/(rightShoulderY-rightElbowY))
     N2 = abs((rightElbowX-rightHandX)/(rightShoulderY-rightHandY))
     rightArmAngle = calculate_angle(N1,N2)
-
+    print("left arm  angle: ", leftArmAngle)
+    print("right arm angle: ", rightArmAngle)
     #print(leftArmAngle)
     #if the arm isn't straight enough, add to feedback message
     if(leftArmAngle < 170 or rightArmAngle < 170 ):
-        #TODO: append a feedback message
-        print('')
+        return("Try straightening out your arms")
+    print("good")
+    return
 
-def knee_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
-    '''Check if players knees are bent appropriately'''
-    time_stamp=ball_stationary_timestamp
-    hipsX = metrics.hip_metrics[time_stamp][0]
-    hipsY = metrics.hip_metrics[time_stamp][1]
-    kneesX=metrics.knee_metrics[time_stamp][0]
-    kneesY=metrics.knee_metrics[time_stamp][1]
-    feetX = metrics.feet_metrics[time_stamp][0]
-    feetY = metrics.feet_metrics[time_stamp][1]
-    M1 = abs((hipsX-kneesX)/(hipsY-kneesY))
-    M2 = abs((kneesX-feetX)/(kneesY-feetY))
-    kneeAngle = calculate_angle(M1,M2)
+    # 'once we have that lets get measurements for before the swing (initial stance)'
+    # 'can use both to give concise feedback'
+    
+    
+    # '''Determine if arm position is satisfactory, return tailored feedback message if not 
+    #     We can keep track of a few points in this calculation.
+    #     Firstly, leftmost x values for wrist position determine the start of the swing motion
+    #         -check if wrist/elbow/shoulder pos is accurate
+    #     Secondly, the largest y value for wrist position will determine about the area 
+    #         where the golf ball is liekly hit.
+        
+    #     We can use the timestamp of the ball before/after motion to estimate a more precice location
+    #     for the body during ball impact, and can check the positioning at a few timestamps
+    #     before/after the hit
 
-    # if(kneeAngle<170):
-    #     #TODO: append feedback message for knee angle
+    # '''
+
 
 def shoulder_motion_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
     '''Check motion of shoulders during golf swing'''
@@ -247,10 +247,5 @@ def hand_position_feedback(metrics, body_starting_pos_timestamp):
 
     if abs(y_position_difference) < 15:
         return 'Make sure left wrist is positioned on top of right wrist'
-
-    
-
-
-
 
 analyze_datapoints(vid_analysis_df)
