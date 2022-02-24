@@ -21,7 +21,7 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
         ex. arm position bad, tuck elbows in
     '''
     #shoulder_feet_pos_success: bool
-    feet_pos_feedback: str
+    # feet_pos_feedback: str
     shoulder_metrics={}
     elbow_metrics={}
     wrist_metrics={}
@@ -32,7 +32,7 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     #arm_pos_success: bool
     arm_pos_feedback: str
 
-vid_analysis_df = pd.read_csv('data_extraction.csv')
+vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
 
 def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     '''Input is the csv generated from video analysis,
@@ -41,7 +41,7 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
 
     feedback = []
     calculation_metrics = []
-    metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+    metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '')
     prev_ball_x = None
     prev_ball_y = None
     prev_ball_timestamp = 0
@@ -109,18 +109,18 @@ def analyze_datapoints(vid_analysis_df) -> pd.DataFrame:
     arm_pos_feedback_msg = arm_pos_feedback(metrics, ball_stationary_timestamp)
     
     '''If arm_pos_feedback_msg returns a message, user has incorrect positioning'''
-    if arm_pos_feedback_msg:
-        arm_pos_success = False
-    else:
-        arm_pos_success = True
+    # if arm_pos_feedback_msg:
+    #     arm_pos_success = False
+    # else:
+    #     arm_pos_success = True
 
     feedback.append(
         GolfSwingFeedbackInfoAndMetrics(
             ball_speed=ball_speed,
             launch_angle=launch_angle,
-            shoulder_feet_pos_success=shoulder_feet_pos_success,
-            shoulder_feet_pos_feedback=shoulder_feet_pos_feedback_msg,
-            arm_pos_success=arm_pos_success,
+            # shoulder_feet_pos_success=shoulder_feet_pos_success,
+            # shoulder_feet_pos_feedback=shoulder_feet_pos_feedback_msg,
+            # arm_pos_success=arm_pos_success,
             arm_pos_feedback=arm_pos_feedback_msg
         )
     )
@@ -137,7 +137,7 @@ def calculate_angle(M1,M2):
     ret = atan(angle)
 
     # Convert the angle from radian to degree
-    return((ret * 180) / PI)
+    return(180-((ret * 180) / PI))
 
 
 def ball_speed_calculation(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):
@@ -175,8 +175,6 @@ def feet_pos_feedback(metrics, ball_in_motion_timestamp, ball_stationary_timesta
     print('shoulder positions: ', leftShoulderX, leftShoulderY, rightShoulderX, rightShoulderY)
 
 
-
-
 def arm_pos_feedback(metrics, ball_stationary_timestamp):
     
     'first lets focus on getting measurements just before ball impact'
@@ -203,29 +201,32 @@ def arm_pos_feedback(metrics, ball_stationary_timestamp):
     N1 = abs((rightShoulderX-rightElbowX)/(rightShoulderY-rightElbowY))
     N2 = abs((rightElbowX-rightHandX)/(rightShoulderY-rightHandY))
     rightArmAngle = calculate_angle(N1,N2)
-
+    print("left arm  angle: ", leftArmAngle)
+    print("right arm angle: ", rightArmAngle)
     #print(leftArmAngle)
     #if the arm isn't straight enough, add to feedback message
     if(leftArmAngle < 170 or rightArmAngle < 170 ):
-        metrics.arm_pos_feedback.append("Try straightening out your arms!")
+        # metrics.arm_pos_feedback.append("Try straightening out your arms!")
+        metrics.arm_pos_feedback_msg.append("try straightening out your arms")
+    print("good")
+    return metrics.arm_pos_feedback_msg
 
-
-        'once we have that lets get measurements for before the swing (initial stance)'
-    'can use both to give concise feedback'
+    # 'once we have that lets get measurements for before the swing (initial stance)'
+    # 'can use both to give concise feedback'
     
     
-    '''Determine if arm position is satisfactory, return tailored feedback message if not 
-        We can keep track of a few points in this calculation.
-        Firstly, leftmost x values for wrist position determine the start of the swing motion
-            -check if wrist/elbow/shoulder pos is accurate
-        Secondly, the largest y value for wrist position will determine about the area 
-            where the golf ball is liekly hit.
+    # '''Determine if arm position is satisfactory, return tailored feedback message if not 
+    #     We can keep track of a few points in this calculation.
+    #     Firstly, leftmost x values for wrist position determine the start of the swing motion
+    #         -check if wrist/elbow/shoulder pos is accurate
+    #     Secondly, the largest y value for wrist position will determine about the area 
+    #         where the golf ball is liekly hit.
         
-        We can use the timestamp of the ball before/after motion to estimate a more precice location
-        for the body during ball impact, and can check the positioning at a few timestamps
-        before/after the hit
+    #     We can use the timestamp of the ball before/after motion to estimate a more precice location
+    #     for the body during ball impact, and can check the positioning at a few timestamps
+    #     before/after the hit
 
-    '''
+    # '''
 
 
 def shoulder_motion_feedback(calculation_metrics, ball_in_motion_timestamp, ball_stationary_timestamp):

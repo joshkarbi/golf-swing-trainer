@@ -5,13 +5,15 @@ player position information.
 '''
 
 import time
-from backend.metrics.metric_calculations import GolfSwingFeedbackInfoAndMetrics 
+import pandas as pd
+from metrics.metric_calculations import GolfSwingFeedbackInfoAndMetrics, analyze_datapoints, arm_pos_feedback 
 
 import cv2
 import pytest
 
 from data_extraction.ball_detection import get_coordinates_of_golf_ball_in_image
 from data_extraction.pose_detection import get_body_part_positions_in_image
+
 
 def test_ball_detection_1():
     """Test using screenshot where ball is on the ground.
@@ -146,7 +148,6 @@ def test_pose_detection_performance():
     
 
 def test_arm_pos_feedback_message():
-    test_image = cv2.imread("assets/swing_frame_1.png")
-    pose_info = get_body_part_positions_in_image(
-        image=test_image
-    )
+    vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
+    analyze_datapoints(vid_analysis_df)
+    assert 
