@@ -149,7 +149,8 @@ def test_pose_detection_performance():
     
 
 def test_arm_pos_feedback_message():
-    testObject = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+    testObject = GolfSwingFeedbackInfoAndMetrics(10, 10, '','')
     vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
     analyze_datapoints(vid_analysis_df,testObject)
     assert testObject.arm_pos_feedback_msg == None
+    # ola do the same^ for whatever is expected of the feet feedback msg and hand

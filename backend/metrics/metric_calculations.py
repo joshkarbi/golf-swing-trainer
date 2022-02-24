@@ -29,13 +29,15 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     knee_metrics={}
     ankle_metrics={}
     arm_pos_feedback_msg: str
+    hand_pos_feedback_msg: str
+    feet_pos_feedback_msg: str
     
     #arm_pos_success: bool
     # arm_pos_feedback: str
 
 vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
 
-metrics = GolfSwingFeedbackInfoAndMetrics(10, 10, '', '')
+metrics = GolfSwingFeedbackInfoAndMetrics(10, 10,'')
 
 def analyze_datapoints(vid_analysis_df,metrics) -> pd.DataFrame:
     '''Input is the csv generated from video analysis,
