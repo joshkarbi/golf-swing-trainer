@@ -4,7 +4,7 @@ app.py
 Main entrypoint into backend API.
 
 Run on a local video file: python main.py --video assets/swing.gif
-Run server: export FLASK_ENV=<development/prod> && flask run --port ${PORT:-5000}
+Run server: flask run --host=0.0.0.0 --port=5000
 '''
 
 import argparse
