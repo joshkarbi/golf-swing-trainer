@@ -11,7 +11,7 @@ import argparse
 from threading import Thread
 from typing import List, Dict, Optional, NamedTuple
 from uuid import uuid4
-from backend.metrics.metric_calculations import analyze_datapoints
+from backend.metrics.metric_calculations import analyze_datapoints, GolfSwingFeedbackInfoAndMetrics
 import pandas as pd
 
 from flask import Flask, request
@@ -19,25 +19,6 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 from data_extraction.video_analysis import extract_data_out_of_video
-
-
-class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
-    
-    #metrics for ball speed and launch angle
-    metrics={}
-    '''Body Position Feedback:
-        each incorrect body position will have written feedback for what to change 
-        ex. arm position bad, tuck elbows in
-    '''
-    shoulder_metrics={}
-    elbow_metrics={}
-    wrist_metrics={}
-    hip_metrics={}
-    knee_metrics={}
-    ankle_metrics={}
-
-    #feedback dictionary for corresponding messages (arm feedback, feet, etc)
-    feedback = {}
 
 class GolfSwingAnalysisResults(NamedTuple):
     """Results provided from this API to the client.
@@ -53,23 +34,18 @@ class APIResults:
 def analyze_video(video_file_path: Optional[str] = None, video_id: Optional[str] = None) -> GolfSwingAnalysisResults:
     """Run the swing analysis on a video.
     """
-    # Step 1: Extract data out of the video - pose and golf ball tracking data.
+    # Step 1: Extract data out of the video - pose and golf ball tracking data. Write and read to csv file.
     data = extract_data_out_of_video(video_file_name = video_file_path)
 
-    metrics = GolfSwingFeedbackInfoAndMetrics()
-
-    # Step 2: Estimate key metrics using data.
-
-    vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
-    analyze_datapoints(vid_analysis_df,metrics)
-
-    # Step 3: Use data to provide feedback on swing.
+    # Step 2: Estimate key metrics using data and provide feedback on swing.
+    swingObject = GolfSwingFeedbackInfoAndMetrics()
+    analyze_datapoints(data,swingObject)
 
     results = GolfSwingAnalysisResults(
         success=True,
         video_analyzed=video_file_path.split("/")[-1],
-        pieces_of_feedback=[], # TODO: See step 3.
-        metrics={} # TODO: See step 2.
+        pieces_of_feedback=swingObject.feedback,
+        metrics=swingObject.metrics
     )
 
     if video_id:

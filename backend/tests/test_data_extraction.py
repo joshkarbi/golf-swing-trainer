@@ -7,7 +7,7 @@ player position information.
 from cgi import test
 import time
 import pandas as pd
-from metrics.metric_calculations import GolfSwingFeedbackInfoAndMetrics, analyze_datapoints, arm_pos_feedback 
+from metrics.metric_calculations import analyze_datapoints, GolfSwingFeedbackInfoAndMetrics
 
 import cv2
 import pytest
@@ -149,8 +149,9 @@ def test_pose_detection_performance():
     
 
 def test_arm_pos_feedback_message():
-    testObject = GolfSwingFeedbackInfoAndMetrics(10, 10, '','')
-    vid_analysis_df = pd.read_csv('C:/Users/chels/Documents/School/4th Year Semester 2/Capstone/golf-swing-trainer/backend/metrics/data_extraction.csv')
+    testObject = GolfSwingFeedbackInfoAndMetrics()
+    vid_analysis_df = pd.read_csv('metrics/data_extraction.csv')
     analyze_datapoints(vid_analysis_df,testObject)
-    assert testObject.arm_pos_feedback_msg == None
-    # ola do the same^ for whatever is expected of the feet feedback msg and hand
+    assert testObject.feedback['feet_pos_feedback_msg'] == None
+    assert testObject.feedback['arm_pos_feedback_msg'] == None
+    assert testObject.feedback['wrist_pos_feedback_msg'] == None
