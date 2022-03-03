@@ -4,7 +4,6 @@ the metrics and feedback applicable to the shot. Using this data, it performs ca
 has correct positioning, and provides feedback
 '''
 
-from sqlite3 import Timestamp
 from typing import NamedTuple
 import pandas as pd
 from math import atan, sqrt
@@ -33,6 +32,8 @@ def analyze_datapoints(vid_analysis_df, swingObject) -> pd.DataFrame:
     body_starting_pos_index = 0
     ball_in_motion_timestamp = 0
     ball_in_motion_index = 0
+
+    ball_stationary_timestamp = None
     timestamps_from_starting_pos_to_shot = []
 
     for index, row in vid_analysis_df.iterrows():
@@ -101,11 +102,17 @@ def analyze_datapoints(vid_analysis_df, swingObject) -> pd.DataFrame:
                 break
 
     '''TODO: ball speed calculation'''
-    ball_speed = ball_speed_calculation(swingObject, ball_in_motion_timestamp, ball_stationary_timestamp)
+    ball_speed = (
+        ball_speed_calculation(swingObject, ball_in_motion_timestamp, ball_stationary_timestamp)
+        if ball_stationary_timestamp is not None else
+        None
+    )
     swingObject.metrics['ball_speed'] = ball_speed
 
     '''TODO: launch angle calculation, also get ground position'''
-    swingObject.metrics['launch_angle'] = launch_angle_calculation(ball_speed, 445)
+    swingObject.metrics['launch_angle'] = (
+        launch_angle_calculation(ball_speed, 445) if ball_stationary_timestamp is not None else None
+    )
 
     swingObject.feedback['feet_pos_feedback_msg'] = feet_pos_feedback(swingObject, body_starting_pos_timestamp)
 
@@ -138,7 +145,7 @@ def feet_pos_feedback(swingObject, body_starting_pos_timestamp):
     shoulder_displacement = calculate_line_length(timestamped_metrics['leftShoulderX'], timestamped_metrics['leftShoulderY'], timestamped_metrics['rightShoulderX'], timestamped_metrics['rightShoulderY'])
     ankle_displacement = timestamped_metrics['rightAnkleX'] - timestamped_metrics['leftAnkleX']
 
-    x_position_difference = abs(shoulder_displacement) - abs(ankle_displacement)
+    x_position_difference = abs(abs(shoulder_displacement) - abs(ankle_displacement))
 
     if x_position_difference > 30:
         return 'feet are too wide apart, adjust feet position to be shoulder width apart'

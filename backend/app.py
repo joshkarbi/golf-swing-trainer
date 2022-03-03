@@ -11,8 +11,7 @@ import argparse
 from threading import Thread
 from typing import List, Dict, Optional, NamedTuple
 from uuid import uuid4
-from backend.metrics.metric_calculations import analyze_datapoints, GolfSwingFeedbackInfoAndMetrics
-import pandas as pd
+from metrics.metric_calculations import analyze_datapoints, GolfSwingFeedbackInfoAndMetrics
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -88,4 +87,5 @@ if __name__=="__main__":
     args = ap.parse_args()
 
     print("Running on local video file!!")
-    analyze_video(video_file_path = args.video)
+    results = analyze_video(video_file_path = args.video)
+    print(f"Result of analysis: {results}")
