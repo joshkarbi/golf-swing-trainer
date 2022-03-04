@@ -1,4 +1,3 @@
-
 import cv2
 
 image = cv2.imread("assets/player_swinging_2.jpg")

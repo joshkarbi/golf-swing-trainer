@@ -1,4 +1,3 @@
-
 from typing import NamedTuple, Generator, Any, Tuple
 
 import cv2
@@ -7,10 +6,12 @@ import pandas as pd
 from .ball_detection import get_coordinates_of_golf_ball_in_image
 from .pose_detection import get_body_part_positions_in_image
 
+
 class GolfSwingVideoFrameInfo(NamedTuple):
     """Info from 1 frame in a golf swing video.
     All coordinates / dimensions are in pixels.
     """
+
     timestamp: float
 
     video_width: int
@@ -20,7 +21,7 @@ class GolfSwingVideoFrameInfo(NamedTuple):
     ball_y: int
 
     nose_x: float
-    nose_y: float 
+    nose_y: float
     left_eye_x: float
     left_eye_y: float
     right_eye_x: float
@@ -54,9 +55,14 @@ class GolfSwingVideoFrameInfo(NamedTuple):
     right_ankle_x: float
     right_ankle_y: float
 
+
 Image = Any
-def get_video_frames(video_file_name: str) -> Generator[Tuple[Image, float], None, None]:
-    """Generator to pull image frames and 
+
+
+def get_video_frames(
+    video_file_name: str,
+) -> Generator[Tuple[Image, float], None, None]:
+    """Generator to pull image frames and
     timestamps out of a video file.
 
     Parameters
@@ -73,12 +79,13 @@ def get_video_frames(video_file_name: str) -> Generator[Tuple[Image, float], Non
         is_next_frame, frame = vs.read()
         if is_next_frame:
             yield [frame, round(timestamp, 2)]
-            timestamp += 1/frames_per_second 
+            timestamp += 1 / frames_per_second
         else:
             return
-            
+
+
 def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
-    """Extract data out of the video into 
+    """Extract data out of the video into
     a dataframe containing the observations.
 
     Parameters
@@ -94,7 +101,7 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
 
         height, width = image.shape[0], image.shape[1]
 
-        ball_x, ball_y = get_coordinates_of_golf_ball_in_image(image = image)
+        ball_x, ball_y = get_coordinates_of_golf_ball_in_image(image=image)
         if not any([ball_x, ball_y]):
             ball_x = prev_ball_x
             ball_y = prev_ball_y
@@ -108,10 +115,10 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
                 video_height=height,
                 ball_x=ball_x,
                 ball_y=ball_y,
-                **get_body_part_positions_in_image(image = image)
+                **get_body_part_positions_in_image(image=image)
             )
         )
 
     res = pd.DataFrame(observations)
-    res.to_csv("debug_data_extraction.csv", na_rep='NULL')
+    res.to_csv("debug_data_extraction.csv", na_rep="NULL")
     return res

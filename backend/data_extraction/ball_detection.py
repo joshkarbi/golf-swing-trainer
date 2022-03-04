@@ -1,13 +1,14 @@
-'''
+"""
 Sample script to detect the location of a 
 golf ball in a video clip and compute some basic metrics.
-'''
+"""
 
 from typing import Any, Tuple, Optional
 
 import cv2
 
 Image = Any
+
 
 def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, int]]:
     """Get the (x, y) coordinates of a golf ball in an image.
@@ -28,7 +29,7 @@ def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, i
 
     # Apply Gaussian blur and colour masking
     image = cv2.GaussianBlur(image, (3, 3), 0)
-    image = cv2.inRange(image, (180, 180, 180), (255,255,255))
+    image = cv2.inRange(image, (180, 180, 180), (255, 255, 255))
     image = cv2.bitwise_not(image)
 
     # Run blob detection, filtering on circularity and color.

@@ -1,8 +1,8 @@
-'''
+"""
 Sample ball tracking script, based on:
 
 https://www.pyimagesearch.com/2015/09/14/ball-tracking-with-opencv/
-'''
+"""
 
 # import the necessary packages
 
@@ -46,7 +46,6 @@ while True:
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
 
-
     # find contours in the mask and initialize the current
     # (x, y) center of the ball
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -65,8 +64,7 @@ while True:
         if radius > 10:
             # draw the circle and centroid on the frame,
             # then update the list of tracked points
-            cv2.circle(frame, (int(x), int(y)), int(radius),
-            (0, 255, 255), 2)
+            cv2.circle(frame, (int(x), int(y)), int(radius), (0, 255, 255), 2)
             cv2.circle(frame, center, 5, (0, 0, 255), -1)
             # update the points queue
             pts.appendleft(center)
