@@ -102,4 +102,4 @@ if __name__ == "__main__":
 
     print("Running on local video file!!")
     results = analyze_video(video_file_path=args.video)
-    print(f"Result of analysis: {results}")
+    print(f"Result of analysis: {results._asdict()}")

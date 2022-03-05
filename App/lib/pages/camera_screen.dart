@@ -47,6 +47,14 @@ class _CameraScreenState extends State<CameraScreen>
 
   ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
 
+  // Once populated by uploadFile() will look like:
+  // {success: true, video_analyzed: 'swing.gif', pieces_of_feedback: {
+  //     'feet_pos_feedback_msg': "" or null, 'arm_pos_feedback_msg': same, 'wrist_pos_feedback_msg': same, 'knee_pos_feedback_msg': same},
+  // metrics: {'ball_speed': float in metres/second, 'launch_angle': float, degrees above horizontal})
+
+  // i.e. {'success': True, 'video_analyzed': 'hand_position.mov', 'pieces_of_feedback': {'feet_pos_feedback_msg': 'feet are too wide apart, adjust feet position to be shoulder width apart', 'arm_pos_feedback_msg': None, 'wrist_pos_feedback_msg': 'Make sure forward wrist is positioned on top of other wrist', 'knee_pos_feedback_msg': None}, 'metrics': {'ball_speed': 76.62, 'launch_angle': 86.6}}
+  Map<String, dynamic> videoAnalysisResults;
+
   refreshAlreadyCapturedImages() async {
     final directory = await getApplicationDocumentsDirectory();
     List<FileSystemEntity> fileList = await directory.list().toList();
@@ -270,9 +278,35 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   void uploadFile(String filePath) async {
-    var request = http.MultipartRequest("POST", Uri.parse('gdds'));
-    request.files.add(await http.MultipartFile.fromPath('fileName', filePath));
-    request.send();
+    // upload video file to backend and save analysis results in this.videoAnalysisResults
+    // results look like: {'success': True, 'video_analyzed': 'hand_position.mov', 'pieces_of_feedback': {'feet_pos_feedback_msg': 'feet are too wide apart, adjust feet position to be shoulder width apart', 'arm_pos_feedback_msg': None, 'wrist_pos_feedback_msg': 'Make sure forward wrist is positioned on top of other wrist', 'knee_pos_feedback_msg': None}, 'metrics': {'ball_speed': 76.62, 'launch_angle': 86.6}}
+    var backendUrl = 'http://10.0.0.127:5000'; // NOTE: To be set based on IP of machine running backend server.
+    
+    // Upload swing to backend to do analysis.
+    var request = http.MultipartRequest('POST', Uri.parse(backendUrl + '/swing_to_analyze'));
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'filename',
+        filePath
+      )
+    );
+
+    // returns {success: true, video_id: <ID>}
+    var res = await request.send();
+    var res_json = jsonDecode(await res.stream.bytesToString());
+    var id = res_json['video_id'];
+
+    // use ID to query for results
+    while (true) {
+      var res = await http.get(Uri.parse(backendUrl + '/results?video_id=' + id));
+      res_json = jsonDecode(await res.body);
+      if (res_json['success']) {
+        videoAnalysisResults = res_json;
+        break;
+      } else {
+        await Future.delayed(Duration(seconds: 1));
+      }
+    }
   }
 
   @override
