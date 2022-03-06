@@ -27,10 +27,14 @@ def track_ball(im):
     detector = cv2.SimpleBlobDetector_create(parameters=params)
     keypoints = detector.detect(im)
 
+    if keypoints and keypoints[0].pt[1] < len(im) / 2:
+        keypoints = None
     # Keep track of ball points over time so we can draw the path
     if keypoints:
+        print("Ball at", keypoints[0].pt)
         ball_key_points.append(keypoints)
     for key_point in ball_key_points:
+        print("drawing", key_point[0].pt)
         original_frame = cv2.drawKeypoints(
             original_frame,
             key_point,
@@ -44,7 +48,7 @@ def track_ball(im):
 
 ### CREATE MASK OF IMAGE HIGHLIGHTING WHITE/GRAY REGIONS ###
 
-vid_capture = cv2.VideoCapture("assets/swing.gif")
+vid_capture = cv2.VideoCapture("assets/samples-josh/004.mp4")
 frame_width = int(vid_capture.get(3))
 frame_height = int(vid_capture.get(4))
 frame_size = (frame_width, frame_height)
@@ -64,5 +68,5 @@ while vid_capture.isOpened():
 
 vid_capture.release()
 imageio.mimsave(
-    "archive/swing_with_ball_tracking.gif", output_frames, fps=fps / 5, format="GIF"
+    "assets/samples-josh/004-ball-tracking.mp4", output_frames, fps=fps / 2, format="MP4"
 )
