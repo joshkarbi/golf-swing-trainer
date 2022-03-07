@@ -1,5 +1,6 @@
 import 'package:app/data/footer_items.dart';
 import 'package:app/pages/camera_screen.dart';
+import 'package:app/pages/stats_screen.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
@@ -11,6 +12,8 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int pageIndex=0;
+
+  late Map<String,dynamic> emptyMap={};
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +26,7 @@ class _HomeState extends State<Home> {
     return IndexedStack(
       index: pageIndex,
       children: [
-        CameraScreen(),
+        CameraScreen(),StatsScreen( receivedMap: emptyMap,)
       ],
     );
   }
