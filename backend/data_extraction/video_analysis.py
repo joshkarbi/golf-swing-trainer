@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from .ball_detection import get_coordinates_of_golf_ball_in_image
-from .pose_detection import get_body_part_positions_in_image, overlay_movenet_on_frame
+from .pose_detection import get_body_part_positions_in_image, reset_crop_region, run_inference_and_overlay_movenet_on_frame
 
 
 class GolfSwingVideoFrameInfo(NamedTuple):
@@ -110,19 +110,15 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
         if keypoints:
             ball_keypoints.append(keypoints)
         for keypoint in ball_keypoints:
-            image = cv2.drawKeypoints(
-                    image,
-                    keypoint,
-                    np.array([]),
-                    (0, 0, 255),
-                    cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
-                )
+            x, y = keypoint[0].pt
+            center = (int(x), int(y))
+            image = cv2.circle(img=image, center=center, radius=int(keypoint[0].size), color=(0,255,0), thickness=4)
 
         if not any([ball_x, ball_y]):
             ball_x = prev_ball_x
             ball_y = prev_ball_y
 
-        annotated_frame = overlay_movenet_on_frame(image=image)
+        annotated_frame, inference_res = run_inference_and_overlay_movenet_on_frame(image=image)
         
         annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
         annotated_frames.append(annotated_frame)
@@ -137,7 +133,7 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
                 video_height=height,
                 ball_x=ball_x,
                 ball_y=ball_y,
-                **get_body_part_positions_in_image(image=image)
+                **get_body_part_positions_in_image(image=image, keypoints_with_scores=inference_res)
             )
         )
 
@@ -153,5 +149,7 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
     imageio.mimsave("./static/animation.gif", output, fps=20)
     imageio.mimsave("./static/animation.mp4", output, fps=20, format="MP4")
     imageio.imsave('./static/swing_overlay.png', annotated_frames[0])
+
+    reset_crop_region()
 
     return res

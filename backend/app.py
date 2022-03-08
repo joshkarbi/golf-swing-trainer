@@ -7,7 +7,7 @@ Run on a local video file: python main.py --video assets/swing.gif
 Run server: flask run --host=0.0.0.0 --port=5000
 """
 
-import argparse
+import argparse, time
 from threading import Thread
 from typing import List, Dict, Optional, NamedTuple
 from uuid import uuid4
@@ -105,5 +105,8 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     print("Running on local video file!!")
+    start = time.time()
     results = analyze_video(video_file_path=args.video)
+    end = time.time()
+    print(f"Analysis took: {end - start} seconds.")
     print(f"Result of analysis: {results._asdict()}")
