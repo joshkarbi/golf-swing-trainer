@@ -15,6 +15,7 @@ An app that analyzes user golf swings and provides useful feedback.
     ├── archive                   # Old code that might be useful at some point.
     ├── assets                    # Sample images/videos used to test the system.
     ├── data_extraction           # Module providing functionality to extract data out of video/images (i.e. golf ball coordinates, player positioning).
+    ├── metrics                   # Module responsible for swing metric calculations and feedback generation
     └── tests                     # Unit tests.
 
 ### How do I get setup? ###
