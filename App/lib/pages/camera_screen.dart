@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:app/pages/stats_screen.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:app/pages/preview_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:app/main.dart';
@@ -53,7 +54,7 @@ class _CameraScreenState extends State<CameraScreen>
   // metrics: {'ball_speed': float in metres/second, 'launch_angle': float, degrees above horizontal})
 
   // i.e. {'success': True, 'video_analyzed': 'hand_position.mov', 'pieces_of_feedback': {'feet_pos_feedback_msg': 'feet are too wide apart, adjust feet position to be shoulder width apart', 'arm_pos_feedback_msg': None, 'wrist_pos_feedback_msg': 'Make sure forward wrist is positioned on top of other wrist', 'knee_pos_feedback_msg': None}, 'metrics': {'ball_speed': 76.62, 'launch_angle': 86.6}}
-  Map<String, dynamic> videoAnalysisResults;
+  late Map<String, dynamic> videoAnalysisResults;
 
   refreshAlreadyCapturedImages() async {
     final directory = await getApplicationDocumentsDirectory();
@@ -280,7 +281,7 @@ class _CameraScreenState extends State<CameraScreen>
   void uploadFile(String filePath) async {
     // upload video file to backend and save analysis results in this.videoAnalysisResults
     // results look like: {'success': True, 'video_analyzed': 'hand_position.mov', 'pieces_of_feedback': {'feet_pos_feedback_msg': 'feet are too wide apart, adjust feet position to be shoulder width apart', 'arm_pos_feedback_msg': None, 'wrist_pos_feedback_msg': 'Make sure forward wrist is positioned on top of other wrist', 'knee_pos_feedback_msg': None}, 'metrics': {'ball_speed': 76.62, 'launch_angle': 86.6}}
-    var backendUrl = 'http://10.0.0.127:5000'; // NOTE: To be set based on IP of machine running backend server.
+    var backendUrl = 'http://192.168.0.32:5000/'; // NOTE: To be set based on IP of machine running backend server.
     
     // Upload swing to backend to do analysis.
     var request = http.MultipartRequest('POST', Uri.parse(backendUrl + '/swing_to_analyze'));
@@ -302,11 +303,19 @@ class _CameraScreenState extends State<CameraScreen>
       res_json = jsonDecode(await res.body);
       if (res_json['success']) {
         videoAnalysisResults = res_json;
+        print(videoAnalysisResults);
         break;
       } else {
         await Future.delayed(Duration(seconds: 1));
       }
     }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => StatsScreen(
+            receivedMap: videoAnalysisResults,
+          )),
+    );
   }
 
   @override
@@ -457,60 +466,8 @@ class _CameraScreenState extends State<CameraScreen>
                         ),
                         Row(
                           mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          MainAxisAlignment.center,
                           children: [
-                            InkWell(
-                              onTap: _isRecordingInProgress
-                                  ? () async {
-                                if (controller!
-                                    .value.isRecordingPaused) {
-                                  await resumeVideoRecording();
-                                } else {
-                                  await pauseVideoRecording();
-                                }
-                              }
-                                  : () {
-                                setState(() {
-                                  _isCameraInitialized = false;
-                                });
-                                onNewCameraSelected(cameras[
-                                _isRearCameraSelected ? 1 : 0]);
-                                setState(() {
-                                  _isRearCameraSelected =
-                                  !_isRearCameraSelected;
-                                });
-                              },
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.circle,
-                                    color: Colors.black38,
-                                    size: 60,
-                                  ),
-                                  _isRecordingInProgress
-                                      ? controller!
-                                      .value.isRecordingPaused
-                                      ? Icon(
-                                    Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 30,
-                                  )
-                                      : Icon(
-                                    Icons.pause,
-                                    color: Colors.white,
-                                    size: 30,
-                                  )
-                                      : Icon(
-                                    _isRearCameraSelected
-                                        ? Icons.camera_front
-                                        : Icons.camera_rear,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ),
-                                ],
-                              ),
-                            ),
                             InkWell(
                               onTap: _isVideoCameraSelected
                                   ? () async {
@@ -592,55 +549,6 @@ class _CameraScreenState extends State<CameraScreen>
                                   )
                                       : Container(),
                                 ],
-                              ),
-                            ),
-                            InkWell(
-                              onTap:
-                              _imageFile != null || _videoFile != null
-                                  ? () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        PreviewScreen(
-                                          imageFile: _imageFile!,
-                                          fileList: allFileList,
-                                        ),
-                                  ),
-                                );
-                              }
-                                  : null,
-                              child: Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.black,
-                                  borderRadius:
-                                  BorderRadius.circular(10.0),
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2,
-                                  ),
-                                  image: _imageFile != null
-                                      ? DecorationImage(
-                                    image: FileImage(_imageFile!),
-                                    fit: BoxFit.cover,
-                                  )
-                                      : null,
-                                ),
-                                child: videoController != null &&
-                                    videoController!
-                                        .value.isInitialized
-                                    ? ClipRRect(
-                                  borderRadius:
-                                  BorderRadius.circular(8.0),
-                                  child: AspectRatio(
-                                    aspectRatio: videoController!
-                                        .value.aspectRatio,
-                                    child: VideoPlayer(
-                                        videoController!),
-                                  ),
-                                )
-                                    : Container(),
                               ),
                             ),
                           ],
