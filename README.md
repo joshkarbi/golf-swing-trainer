@@ -1,12 +1,13 @@
 # golf-swing-trainer
 An app that analyzes user golf swings and provides useful feedback.
 
-# Demo videos
+### Demos ##
 
-Original Video of Swing            |  Computer Vision Feature Extracted | Combined
-:-------------------------:|:-------------------------:
-![Alt text](/docs/swing.gif) |  ![Alt text](/docs/computer_vision.gif) | ![Alt text](/docs/animation.gif) 
-
+<p float="left">
+  <img src="/docs/swing.gif" width="200" />
+  <img src="/docs/computer_vision.gif" width="200" /> 
+  <img src="/docs/animation.gif" width="200" />
+</p>
 
 ### Backend Directory Structure ###
 
