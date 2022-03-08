@@ -6,11 +6,14 @@ golf ball in a video clip and compute some basic metrics.
 from typing import Any, Tuple, Optional
 
 import cv2
+from matplotlib.pyplot import annotate
+import numpy as np
+
 
 Image = Any
 
 
-def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, int]]:
+def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, int, Image]]:
     """Get the (x, y) coordinates of a golf ball in an image.
 
     X and Y coordinates are distances from top left corner of the image
@@ -43,9 +46,14 @@ def get_coordinates_of_golf_ball_in_image(image: Image) -> Optional[Tuple[int, i
     # Return either the found coordinates or None, None
     if keypoints:
         x, y = keypoints[0].pt
-        return (
-            (round(x, 2), round(y, 2)) 
-            if keypoints[0].pt[1] < len(image) / 2 else
-            (None, None)
-        )
-    return None, None
+
+        if keypoints[0].pt[1] > len(image) / 2:
+            return (
+                round(x, 2), round(y, 2), keypoints
+            ) 
+        else:
+            return (None, None, None)
+    
+
+        
+    return None, None, None

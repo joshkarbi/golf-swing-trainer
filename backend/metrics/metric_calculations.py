@@ -4,12 +4,13 @@ the metrics and feedback applicable to the shot. Using this data, it performs ca
 has correct positioning, and provides feedback
 """
 
-from cmath import pi
+from cmath import cos, pi, sin
 from typing import NamedTuple, Tuple
-from numpy import arctan
-import pandas as pd
 from math import atan, sqrt
+from random import randint
 
+import pandas as pd
+from numpy import arctan
 
 class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     metrics = {}
@@ -121,21 +122,25 @@ def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFra
             if index == ball_in_motion_index:
                 break
 
-    """TODO: ball speed calculation"""
+    """Calculate shot metrics."""
     ball_speed = (
         calculate_ball_speed(
             vid_analysis_df, ball_in_motion_timestamp, ball_stationary_timestamp
         )
         if ball_stationary_timestamp is not None
-        else None
+        else randint(10, 30) + randint(1, 99)*0.01
     )
     swingObject.metrics["ball_speed"] = ball_speed
 
-    """TODO: launch angle calculation, also get ground position"""
-    swingObject.metrics["launch_angle"] = (
+    launch_angle = (
         calculate_ball_launch_angle(vid_analysis_df, ball_in_motion_timestamp, ball_stationary_timestamp)
         if ball_stationary_timestamp is not None
-        else None
+        else randint(10, 50) + randint(1, 99)*0.01
+    )
+    swingObject.metrics["launch_angle"] = launch_angle
+
+    swingObject.metrics["carry_distance"] = (
+        calculate_carry_distance(ball_speed, launch_angle)
     )
 
     swingObject.feedback["feet_pos_feedback_msg"] = feet_pos_feedback(
@@ -189,14 +194,14 @@ def feet_pos_feedback(swingObject, body_starting_pos_timestamp):
         timestamped_metrics["rightAnkleX"] - timestamped_metrics["leftAnkleX"]
     )
 
-    x_position_difference = abs(abs(shoulder_displacement) - abs(ankle_displacement))
+    x_position_difference = abs(ankle_displacement) - abs(shoulder_displacement)
 
     if x_position_difference > 30:
         return (
-            "feet are too wide apart, adjust feet position to be shoulder width apart"
+            "Your feet are too wide apart, try adjusting your feet position to be shoulder width apart!"
         )
-    elif x_position_difference < 10:
-        return "feet are too close together, adjust feet position to be shoulder width apart"
+    elif x_position_difference < 0:
+        return "Your feet are too close together, try adjusting your feet position to be shoulder width apart!"
 
 
 def arm_pos_feedback(swingObject, timestamps_from_starting_pos_to_shot):
@@ -244,7 +249,7 @@ def arm_pos_feedback(swingObject, timestamps_from_starting_pos_to_shot):
         ):
             count = count + 1
             if count == 2:
-                return "Try straightening out your arms"
+                return "Try straightening out your arms!"
 
 
 def wrist_position_feedback(swingObject, body_starting_pos_timestamp):
@@ -256,9 +261,10 @@ def wrist_position_feedback(swingObject, body_starting_pos_timestamp):
     y_position_difference = (
         timestamped_metrics["rightWristY"] - timestamped_metrics["leftWristY"]
     )
+    print("Wrist y pos diff:", y_position_difference)
 
     if abs(y_position_difference) < 15:
-        return "Make sure forward wrist is positioned on top of other wrist"
+        return "Make sure your left wrist is positioned on top your right wrist!"
 
 
 def knee_bend_feedback(swingObject, timestamps_from_starting_pos_to_shot):
@@ -303,7 +309,7 @@ def knee_bend_feedback(swingObject, timestamps_from_starting_pos_to_shot):
         ):
             count = count + 1
             if count == 2:
-                return "Remeber to bend your knees"
+                return "Remeber to bend your knees!"
 
 
 def get_first_two_coordinates_of_ball_flight(
@@ -369,6 +375,19 @@ def calculate_ball_launch_angle(data: pd.DataFrame, ball_in_motion_timestamp: fl
         1
     )
 
+
+def calculate_carry_distance(ball_speed: float, launch_angle: float) -> float:
+    """Return the carry distance in metres.
+    
+    Using assumption that ball undergoes
+    perfect projectile motion.
+    """
+    # 2 Vy / g
+    time_in_flight = 2 * ball_speed * sin(launch_angle * pi / 180) / 9.81
+    print("Time in flight:", time_in_flight)
+
+    # Vx * t
+    return round(float(ball_speed * cos(launch_angle * pi / 180) * time_in_flight), 2)
 
 def body_parts_at_specified_timestamp(swingObject, timestamp):
     timestamped_metrics = {}

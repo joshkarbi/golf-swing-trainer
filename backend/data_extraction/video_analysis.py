@@ -1,10 +1,12 @@
 from typing import NamedTuple, Generator, Any, Tuple
 
 import cv2
+import imageio
 import pandas as pd
+import numpy as np
 
 from .ball_detection import get_coordinates_of_golf_ball_in_image
-from .pose_detection import get_body_part_positions_in_image
+from .pose_detection import get_body_part_positions_in_image, overlay_movenet_on_frame
 
 
 class GolfSwingVideoFrameInfo(NamedTuple):
@@ -96,15 +98,35 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
 
     observations = []
     prev_ball_x, prev_ball_y = None, None
+    annotated_frames = []
+    ball_keypoints = []
+    annotated_frame = None
 
     for image, timestamp in get_video_frames(video_file_name=video_file_name):
 
         height, width = image.shape[0], image.shape[1]
 
-        ball_x, ball_y = get_coordinates_of_golf_ball_in_image(image=image)
+        ball_x, ball_y, keypoints = get_coordinates_of_golf_ball_in_image(image=image)
+        if keypoints:
+            ball_keypoints.append(keypoints)
+        for keypoint in ball_keypoints:
+            image = cv2.drawKeypoints(
+                    image,
+                    keypoint,
+                    np.array([]),
+                    (0, 0, 255),
+                    cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS,
+                )
+
         if not any([ball_x, ball_y]):
             ball_x = prev_ball_x
             ball_y = prev_ball_y
+
+        annotated_frame = overlay_movenet_on_frame(image=image)
+        
+        annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+        annotated_frames.append(annotated_frame)
+
         prev_ball_x = ball_x
         prev_ball_y = ball_y
 
@@ -119,6 +141,17 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
             )
         )
 
+    # Save debug data extraction
     res = pd.DataFrame(observations)
     res.to_csv("debug_data_extraction.csv", na_rep="NULL")
+
+    # Build the visualization
+    for i, frame in zip(range(len(annotated_frames)), annotated_frames):
+        annotated_frames[i] = frame[20:-40, 20:-20]
+
+    output = np.stack(annotated_frames, axis=0)
+    imageio.mimsave("./static/animation.gif", output, fps=20)
+    imageio.mimsave("./static/animation.mp4", output, fps=20, format="MP4")
+    imageio.imsave('./static/swing_overlay.png', annotated_frames[0])
+
     return res

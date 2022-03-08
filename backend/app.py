@@ -16,7 +16,7 @@ from metrics.metric_calculations import (
     GolfSwingFeedbackInfoAndMetrics,
 )
 
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -88,6 +88,10 @@ def send_client_results_if_available():
     else:
         return {"success": False, "status": "processing"}
 
+
+@app.route("/static/<path:path>")
+def static_dir(path):
+    return send_from_directory("static", path)
 
 @app.route("/")
 def hello():
