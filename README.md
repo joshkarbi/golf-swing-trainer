@@ -2,8 +2,11 @@
 An app that analyzes user golf swings and provides useful feedback.
 
 # Demo videos
-![Alt text](/docs/animation.gif)
-![Alt text](/docs/computer_vision.gif)
+
+Original Video of Swing            |  Computer Vision Feature Extracted | Combined
+:-------------------------:|:-------------------------:
+![Alt text](/docs/swing.gif) |  ![Alt text](/docs/computer_vision.gif) | ![Alt text](/docs/animation.gif) 
+
 
 ### Backend Directory Structure ###
 
