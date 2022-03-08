@@ -5,12 +5,13 @@ import 'package:app/main.dart';
 class StatsScreen extends StatefulWidget {
   late Map<String, dynamic> receivedMap;
   StatsScreen({required this.receivedMap});
-
+  
   @override
   State<StatsScreen> createState() => _StatsScreenState();
 }
 
 class _StatsScreenState extends State<StatsScreen> {
+
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,34 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Widget getBody(){
+    final List feedbackList=[];
+    final List icons=[];
+
+    if (widget.receivedMap["pieces_of_feedback"]["arm_pos_feedback_msg"]!=null){
+      feedbackList.add(widget.receivedMap["pieces_of_feedback"]["arm_pos_feedback_msg"]);
+      icons.add(Icons.emoji_people);
+    }
+    if (widget.receivedMap["pieces_of_feedback"]["wrist_pos_feedback_msg"]!=null){
+      feedbackList.add(widget.receivedMap["pieces_of_feedback"]["wrist_pos_feedback_msg"]);
+      icons.add(Icons.golf_course);
+    }
+    if (widget.receivedMap["pieces_of_feedback"]["knee_pos_feedback_msg"]!=null){
+      feedbackList.add(widget.receivedMap["pieces_of_feedback"]["knee_pos_feedback_msg"]);
+      icons.add(Icons.boy);
+    }
+    if (widget.receivedMap["pieces_of_feedback"]["feet_pos_feedback_msg"]!=null){
+      feedbackList.add(widget.receivedMap["pieces_of_feedback"]["feet_pos_feedback_msg"]);
+      icons.add(Icons.do_not_step);
+    }
+    if (widget.receivedMap["metrics"]["ball_speed"]!=null){
+      feedbackList.add("Ball Speed: ${(widget.receivedMap["metrics"]["ball_speed"]).toString()} m/s");
+      icons.add(Icons.speed);
+    }
+    if (widget.receivedMap["metrics"]["launch_angle"]!=null){
+      feedbackList.add("Launch Angle: ${(widget.receivedMap["metrics"]["launch_angle"]).toString()}°");
+      icons.add(Icons.square_foot);
+    }
+
     return Material(
       type: MaterialType.transparency,
       child: SingleChildScrollView(
@@ -53,9 +82,17 @@ class _StatsScreenState extends State<StatsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(
-                        height: 25,
-                      ),
+
+                      ListView.builder(
+                          scrollDirection: Axis.vertical,
+                          shrinkWrap: true,
+                          itemCount: feedbackList.length,
+                          itemBuilder: (context, index) {
+                        return ListTile(
+                          leading: Icon(icons[index]),
+                          title: Text(feedbackList[index]),
+                        );
+                      })
                     ],
                   ),
                 )

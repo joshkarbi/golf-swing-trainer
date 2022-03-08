@@ -26,7 +26,7 @@ class _HomeState extends State<Home> {
     return IndexedStack(
       index: pageIndex,
       children: [
-        CameraScreen(),StatsScreen( receivedMap: emptyMap,)
+        CameraScreen(),//StatsScreen( receivedMap: emptyMap,)
       ],
     );
   }
