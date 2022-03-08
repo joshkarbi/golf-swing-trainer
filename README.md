@@ -1,8 +1,9 @@
 # golf-swing-trainer
 An app that analyzes user golf swings and provides useful feedback.
 
-## backend ##
-Contains backend API which conducts swing analysis.
+# Demo videos
+![Alt text](/docs/animation.gif)
+![Alt text](/docs/computer_vision.gif)
 
 ### Backend Directory Structure ###
 
