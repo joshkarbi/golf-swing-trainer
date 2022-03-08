@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from .ball_detection import get_coordinates_of_golf_ball_in_image
-from .pose_detection import get_body_part_positions_in_image, reset_crop_region, run_inference_and_overlay_movenet_on_frame
+from .pose_detection import draw_prediction_on_image, get_body_part_positions_in_image, reset_crop_region, run_inference_and_overlay_movenet_on_frame
 
 
 class GolfSwingVideoFrameInfo(NamedTuple):
@@ -99,12 +99,16 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
     observations = []
     prev_ball_x, prev_ball_y = None, None
     annotated_frames = []
+    annotated_black_frames = []
+
     ball_keypoints = []
     annotated_frame = None
-
+    annotated_black_frame = None
+    
     for image, timestamp in get_video_frames(video_file_name=video_file_name):
 
         height, width = image.shape[0], image.shape[1]
+        black_frame = np.zeros((height,width,3), np.uint8)
 
         ball_x, ball_y, keypoints = get_coordinates_of_golf_ball_in_image(image=image)
         if keypoints:
@@ -113,15 +117,19 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
             x, y = keypoint[0].pt
             center = (int(x), int(y))
             image = cv2.circle(img=image, center=center, radius=int(keypoint[0].size), color=(0,255,0), thickness=4)
+            black_frame = cv2.circle(img=black_frame, center=center, radius=int(keypoint[0].size), color=(0,255,0), thickness=4)
 
         if not any([ball_x, ball_y]):
             ball_x = prev_ball_x
             ball_y = prev_ball_y
 
         annotated_frame, inference_res = run_inference_and_overlay_movenet_on_frame(image=image)
+        black_frame = draw_prediction_on_image(black_frame, inference_res, None, True, 700)
         
         annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+        annotated_black_frame = cv2.cvtColor(black_frame, cv2.COLOR_BGR2RGB)
         annotated_frames.append(annotated_frame)
+        annotated_black_frames.append(annotated_black_frame)
 
         prev_ball_x = ball_x
         prev_ball_y = ball_y
@@ -142,12 +150,16 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
     res.to_csv("debug_data_extraction.csv", na_rep="NULL")
 
     # Build the visualization
-    for i, frame in zip(range(len(annotated_frames)), annotated_frames):
+    for i, frame, black_frame in zip(range(len(annotated_frames)), annotated_frames, annotated_black_frames):
         annotated_frames[i] = frame[20:-40, 20:-20]
-
+        annotated_black_frames[i] = black_frame[20:-40, 20:-20]
+        
     output = np.stack(annotated_frames, axis=0)
     imageio.mimsave("./static/animation.gif", output, fps=20)
     imageio.mimsave("./static/animation.mp4", output, fps=20, format="MP4")
+    output = np.stack(annotated_black_frames, axis=0)
+    imageio.mimsave("./static/computer_vision.gif", output, fps=20)
+    imageio.mimsave("./static/computer_vision.mp4", output, fps=20, format="MP4")
     imageio.imsave('./static/swing_overlay.png', annotated_frames[0])
 
     reset_crop_region()
