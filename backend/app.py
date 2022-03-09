@@ -42,6 +42,9 @@ def analyze_video(
     video_file_path: Optional[str] = None, video_id: Optional[str] = None
 ) -> GolfSwingAnalysisResults:
     """Run the swing analysis on a video."""
+    
+    start = time.time()
+
     # Step 1: Extract data out of the video - pose and golf ball tracking data. Write and read to csv file.
     data = extract_data_out_of_video(video_file_name=video_file_path)
 
@@ -59,6 +62,8 @@ def analyze_video(
     if video_id:
         APIResults.analysis_results[video_id] = results
 
+    end = time.time()
+    print(f"Analyzing video took {round(end - start, 2)} seconds.")
     return results
 
 
@@ -70,11 +75,12 @@ CORS(app)
 def upload_file():
     if request.method == "POST":
         f = request.files["filename"]
-        f.save(secure_filename(f.filename))
+        saved_file_path = "./static/" + secure_filename(f.filename)
+        f.save(saved_file_path)
 
         video_id = str(uuid4())
 
-        worker = Thread(target=analyze_video, args=(f.filename, video_id))
+        worker = Thread(target=analyze_video, args=(saved_file_path, video_id))
         worker.start()
 
         return {"success": True, "video_id": video_id}
@@ -105,8 +111,5 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     print("Running on local video file!!")
-    start = time.time()
     results = analyze_video(video_file_path=args.video)
-    end = time.time()
-    print(f"Analysis took: {end - start} seconds.")
     print(f"Result of analysis: {results._asdict()}")

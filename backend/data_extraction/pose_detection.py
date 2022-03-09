@@ -2,7 +2,7 @@
 Run pose inference on video frames of a player swinging.
 """
 
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 import tensorflow as tf
 import tensorflow_hub as hub
 
@@ -421,7 +421,7 @@ InferenceResult = Any
 
 def get_body_part_positions_in_image(
     image: Image,
-    keypoints_with_scores: InferenceResult
+    keypoints_with_scores: Optional[InferenceResult] = None
 ) -> Dict[BodyPartLabel, PixelCoordinate]:
     """Run MoveNet inference on an image frame
     and return body part positions.
@@ -430,6 +430,15 @@ def get_body_part_positions_in_image(
     image_height, image_width, _ = image.shape
 
     res = {}
+
+    if keypoints_with_scores is None:
+        crop_region = init_crop_region(image_height, image_width)
+        keypoints_with_scores = run_inference(
+            movenet=movenet,
+            image=image,
+            crop_region=crop_region,
+            crop_size=[input_size, input_size],
+        )
 
     for keypoints, labels in zip(
         keypoints_with_scores[0][0],
