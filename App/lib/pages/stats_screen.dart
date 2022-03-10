@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/main.dart';
 class StatsScreen extends StatefulWidget {
@@ -20,8 +23,12 @@ class _StatsScreenState extends State<StatsScreen> {
       body: getBody(),
     );
   }
-
-  Widget getBody(){
+  /*Future<void> getMedia() async {
+    final ByteData imageData = await NetworkAssetBundle(Uri.parse("http://192.168.0.32:5000/static/swing_overlay.png")).load("");
+    final Uint8List bytes = imageData.buffer.asUint8List();
+  }*/
+  Widget getBody()  {
+    /*getMedia()*/;
     final List feedbackList=[];
     final List icons=[];
 
@@ -49,6 +56,12 @@ class _StatsScreenState extends State<StatsScreen> {
       feedbackList.add("Launch Angle: ${(widget.receivedMap["metrics"]["launch_angle"]).toString()}°");
       icons.add(Icons.square_foot);
     }
+    if (widget.receivedMap["metrics"]["carry_distance"]!=null){
+      feedbackList.add("Carry Distance: ${(widget.receivedMap["metrics"]["carry_distance"]).toString()} m");
+      icons.add(Icons.straighten);
+    }
+
+
 
     return Material(
       type: MaterialType.transparency,
@@ -74,7 +87,7 @@ class _StatsScreenState extends State<StatsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: const [
                           Text(
-                            "Stats",
+                            "Swing Analysis",
                             style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -92,9 +105,13 @@ class _StatsScreenState extends State<StatsScreen> {
                           leading: Icon(icons[index]),
                           title: Text(feedbackList[index]),
                         );
-                      })
+                      }),
+
+                      Image.network("http://192.168.0.32:5000/static/animation.gif"),
+
                     ],
                   ),
+
                 )
             )
           ],
