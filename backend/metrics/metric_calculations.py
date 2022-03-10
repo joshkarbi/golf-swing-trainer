@@ -90,8 +90,9 @@ def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFra
             if prev_ball_x != None and prev_ball_y != None:
                 x_disp = row["ball_x"] - prev_ball_x
                 y_disp = row["ball_y"] - prev_ball_y
-                if x_disp > 10 and y_disp < 10 and ball_in_motion == 0:
+                if x_disp > 10 and ball_in_motion == 0:
                     ball_in_motion_timestamp = row["timestamp"]
+                    print('ball in motion timestamp:', ball_in_motion_timestamp)
                     ball_in_motion_index = index
                     ball_stationary_timestamp = prev_ball_timestamp
                     ball_in_motion = 1
@@ -100,18 +101,16 @@ def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFra
             prev_ball_y = row["ball_y"]
             prev_ball_timestamp = row["timestamp"]
 
-        """Find stationary body position before shot
-            TODO: this will likely need to be altered depending on various other videos we want to feed in"""
+        """Find stationary body position before shot"""
         y_shoulder_disp = row["left_shoulder_y"] - row["right_shoulder_y"]
-        max_wrist_disp = row["right_wrist_y"] - vid_analysis_df["right_wrist_y"].max()
-        max_nose_disp = row["nose_y"] - vid_analysis_df["nose_y"].max()
+        max_right_wrist_disp = row["right_wrist_y"] - vid_analysis_df["right_wrist_y"].max()
         if (
             abs(y_shoulder_disp) < 10
-            and abs(max_wrist_disp) < 10
-            and abs(max_nose_disp) < 10
+            and abs(max_right_wrist_disp) < 20
             and body_starting_pos_timestamp == 0
         ):
             body_starting_pos_timestamp = row["timestamp"]
+            print('starting position timestamp: ', body_starting_pos_timestamp)
             body_starting_pos_index = index
 
     """If ball in motion and starting position are both found, we can iterate over all the in-between timestamps"""
@@ -200,17 +199,14 @@ def feet_pos_feedback(swingObject, body_starting_pos_timestamp):
         return (
             "Your feet are too wide apart, try adjusting your feet position to be shoulder width apart!"
         )
-    elif x_position_difference < 0:
-        return "Your feet are too close together, try adjusting your feet position to be shoulder width apart!"
 
 
 def arm_pos_feedback(swingObject, timestamps_from_starting_pos_to_shot):
 
-    for t in timestamps_from_starting_pos_to_shot:
+    right_handed = 0
+    left_handed = 0
 
-        right_handed = 0
-        left_handed = 0
-        count = 0
+    for t in timestamps_from_starting_pos_to_shot:
 
         timestamped_metrics = body_parts_at_specified_timestamp(swingObject, t)
 
@@ -243,13 +239,8 @@ def arm_pos_feedback(swingObject, timestamps_from_starting_pos_to_shot):
         )
         rightArmAngle = calculate_angle(N1, N2)
 
-        # if the arm isn't straight enough, add to feedback message, check every other timestamp
-        if (leftArmAngle < 170 and right_handed == 1) or (
-            rightArmAngle < 170 and left_handed == 1
-        ):
-            count = count + 1
-            if count == 2:
-                return "Try straightening out your arms!"
+        if (leftArmAngle < 160 and right_handed == 1) or (rightArmAngle < 160 and left_handed == 1):
+            return "Try straightening out your arms!"
 
 
 def wrist_position_feedback(swingObject, body_starting_pos_timestamp):
@@ -261,9 +252,8 @@ def wrist_position_feedback(swingObject, body_starting_pos_timestamp):
     y_position_difference = (
         timestamped_metrics["rightWristY"] - timestamped_metrics["leftWristY"]
     )
-    print("Wrist y pos diff:", y_position_difference)
 
-    if abs(y_position_difference) < 15:
+    if abs(y_position_difference) < 5:
         return "Make sure your left wrist is positioned on top your right wrist!"
 
 
@@ -273,7 +263,6 @@ def knee_bend_feedback(swingObject, timestamps_from_starting_pos_to_shot):
 
         right_handed = 0
         left_handed = 0
-        count = 0
 
         timestamped_metrics = body_parts_at_specified_timestamp(swingObject, t)
 
@@ -307,9 +296,7 @@ def knee_bend_feedback(swingObject, timestamps_from_starting_pos_to_shot):
         if (rightLegAngle > 170 and left_handed == 1) or (
             leftLegAngle > 170 and right_handed == 1
         ):
-            count = count + 1
-            if count == 2:
-                return "Remeber to bend your knees!"
+            return "Remeber to bend your knees!"
 
 
 def get_first_two_coordinates_of_ball_flight(
@@ -416,10 +403,3 @@ def body_parts_at_specified_timestamp(swingObject, timestamp):
     timestamped_metrics["rightAnkleX"] = swingObject.ankle_metrics[timestamp][2]
     timestamped_metrics["rightAnkleY"] = swingObject.ankle_metrics[timestamp][3]
     return timestamped_metrics
-
-
-# using below for testing
-# swingObject = GolfSwingFeedbackInfoAndMetrics()
-# vid_analysis_df = pd.read_csv('data_extraction.csv')
-# analyze_datapoints(vid_analysis_df,swingObject)
-# print(swingObject.feedback)
