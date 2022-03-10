@@ -133,3 +133,4 @@ debug**
 **.mp4
 !backend/assets/**.gif
 !backend/assets/**.mp4
+!docs/*.gif

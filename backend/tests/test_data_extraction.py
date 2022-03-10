@@ -4,7 +4,6 @@ including detecting the coordinates of the golf ball and
 player position information.
 """
 
-from cgi import test
 import time
 import pandas as pd
 from metrics.metric_calculations import (
@@ -23,7 +22,7 @@ def test_ball_detection_1():
     """Test using screenshot where ball is on the ground."""
     test_image = cv2.imread("assets/swing_frame_1.png")
 
-    x, y = get_coordinates_of_golf_ball_in_image(test_image)
+    x, y, _ = get_coordinates_of_golf_ball_in_image(test_image)
 
     # Check the detected coordinates are within 1.5% of expected.
     assert x == pytest.approx(170, rel=0.015)
@@ -34,7 +33,7 @@ def test_ball_detection_2():
     """Test using screenshot of ball in flight."""
     test_image = cv2.imread("assets/swing_frame_2.png")
 
-    x, y = get_coordinates_of_golf_ball_in_image(test_image)
+    x, y, _ = get_coordinates_of_golf_ball_in_image(test_image)
 
     # Check the detected coordinates are within 1.5% of expected.
     assert x == pytest.approx(342, rel=0.015)
@@ -151,7 +150,7 @@ def test_pose_detection_performance():
     # Max 33 ms allowed per frame.
     # A 10 second video uploaded by a user
     # (shot at 30 fps) will take 10 seconds to analyze.
-    assert end - start < 0.0
+    assert end - start < 0.035
 
 
 def test_arm_pos_feedback_message():

@@ -1,8 +1,13 @@
 # golf-swing-trainer
 An app that analyzes user golf swings and provides useful feedback.
 
-## backend ##
-Contains backend API which conducts swing analysis.
+### Demos ##
+
+<p float="left">
+  <img src="/docs/swing.gif" width="200" />
+  <img src="/docs/computer_vision.gif" width="200" /> 
+  <img src="/docs/animation.gif" width="200" />
+</p>
 
 ### Backend Directory Structure ###
 
@@ -10,6 +15,7 @@ Contains backend API which conducts swing analysis.
     ├── archive                   # Old code that might be useful at some point.
     ├── assets                    # Sample images/videos used to test the system.
     ├── data_extraction           # Module providing functionality to extract data out of video/images (i.e. golf ball coordinates, player positioning).
+    ├── metrics                   # Module responsible for swing metric calculations and feedback generation
     └── tests                     # Unit tests.
 
 ### How do I get setup? ###

@@ -8,7 +8,6 @@ import numpy as np
 from .ball_detection import get_coordinates_of_golf_ball_in_image
 from .pose_detection import draw_prediction_on_image, get_body_part_positions_in_image, reset_crop_region, run_inference_and_overlay_movenet_on_frame
 
-
 class GolfSwingVideoFrameInfo(NamedTuple):
     """Info from 1 frame in a golf swing video.
     All coordinates / dimensions are in pixels.
@@ -147,7 +146,7 @@ def extract_data_out_of_video(video_file_name: str) -> pd.DataFrame:
 
     # Save debug data extraction
     res = pd.DataFrame(observations)
-    res.to_csv("debug_data_extraction.csv", na_rep="NULL")
+    res.to_csv("./static/debug_data_extraction.csv", na_rep="NULL")
 
     # Build the visualization
     for i, frame, black_frame in zip(range(len(annotated_frames)), annotated_frames, annotated_black_frames):
