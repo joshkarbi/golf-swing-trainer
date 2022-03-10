@@ -374,7 +374,7 @@ def calculate_carry_distance(ball_speed: float, launch_angle: float) -> float:
     print("Time in flight:", time_in_flight)
 
     # Vx * t
-    return round(float(ball_speed * cos(launch_angle * pi / 180).real * time_in_flight), 2)
+    return round(float(ball_speed * cos(launch_angle * pi / 180).real * time_in_flight.real), 2)
 
 def body_parts_at_specified_timestamp(swingObject, timestamp):
     timestamped_metrics = {}
