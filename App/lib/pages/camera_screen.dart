@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:app/pages/stats_screen.dart';
 import 'package:camera/camera.dart';
+import 'package:app/data/progress.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -281,7 +282,7 @@ class _CameraScreenState extends State<CameraScreen>
   void uploadFile(String filePath) async {
     // upload video file to backend and save analysis results in this.videoAnalysisResults
     // results look like: {'success': True, 'video_analyzed': 'hand_position.mov', 'pieces_of_feedback': {'feet_pos_feedback_msg': 'feet are too wide apart, adjust feet position to be shoulder width apart', 'arm_pos_feedback_msg': None, 'wrist_pos_feedback_msg': 'Make sure forward wrist is positioned on top of other wrist', 'knee_pos_feedback_msg': None}, 'metrics': {'ball_speed': 76.62, 'launch_angle': 86.6}}
-    var backendUrl = 'http://192.168.0.32:5000/'; // NOTE: To be set based on IP of machine running backend server.
+    var backendUrl = 'http://192.168.0.19:5000/'; // NOTE: To be set based on IP of machine running backend server.
     
     // Upload swing to backend to do analysis.
     var request = http.MultipartRequest('POST', Uri.parse(backendUrl + '/swing_to_analyze'));
@@ -297,18 +298,22 @@ class _CameraScreenState extends State<CameraScreen>
     var res_json = jsonDecode(await res.stream.bytesToString());
     var id = res_json['video_id'];
 
+    LoadingIndicatorDialog().show(context);
+
     // use ID to query for results
     while (true) {
       var res = await http.get(Uri.parse(backendUrl + '/results?video_id=' + id));
       res_json = jsonDecode(await res.body);
       if (res_json['success']) {
         videoAnalysisResults = res_json;
-        print(videoAnalysisResults);
+
+
         break;
       } else {
         await Future.delayed(Duration(seconds: 1));
       }
     }
+    LoadingIndicatorDialog().dismiss();
     Navigator.push(
       context,
       MaterialPageRoute(
