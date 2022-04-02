@@ -5,12 +5,14 @@ has correct positioning, and provides feedback
 """
 
 from cmath import cos, pi, sin
-from typing import NamedTuple, Tuple
+from pydoc import apropos
+from typing import NamedTuple, Optional, Tuple
 from math import atan, sqrt
 from random import randint
 
 import pandas as pd
 from numpy import arctan
+from pytest import approx
 
 class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     metrics = {}
@@ -22,6 +24,9 @@ class GolfSwingFeedbackInfoAndMetrics(NamedTuple):
     hip_metrics = {}
     knee_metrics = {}
     ankle_metrics = {}
+
+    eye_metrics = {}
+    nose_metrics = {}
 
 
 def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFrame:
@@ -41,6 +46,16 @@ def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFra
     timestamps_from_starting_pos_to_shot = []
 
     for index, row in vid_analysis_df.iterrows():
+
+        swingObject.eye_metrics[row["timestamp"]] = [
+            row["left_eye_x"],
+            row["right_eye_x"]
+        ]
+        
+        swingObject.nose_metrics[row["timestamp"]] = [
+            row["nose_x"],
+            row["nose_y"]
+        ]
 
         swingObject.shoulder_metrics[row["timestamp"]] = [
             row["left_shoulder_x"],
@@ -155,6 +170,10 @@ def analyze_datapoints(vid_analysis_df: pd.DataFrame, swingObject) -> pd.DataFra
     )
 
     swingObject.feedback["knee_pos_feedback_msg"] = knee_bend_feedback(
+        swingObject, timestamps_from_starting_pos_to_shot
+    )
+
+    swingObject.feedback["head_pos_feedback_msg"] = head_position_feedback(
         swingObject, timestamps_from_starting_pos_to_shot
     )
 
@@ -298,6 +317,24 @@ def knee_bend_feedback(swingObject, timestamps_from_starting_pos_to_shot):
         ):
             return "Remeber to bend your knees!"
 
+def head_position_feedback(swingObject, timestamps_from_starting_pos_to_shot) -> Optional[str]:
+    """Check if user keeps head down as they make contact with the ball.
+    """
+    if len(timestamps_from_starting_pos_to_shot) == 0:
+        return
+
+    pose_during_ball_contact = body_parts_at_specified_timestamp(
+        swingObject,
+        timestamps_from_starting_pos_to_shot[-1]
+    )
+
+    # Estimate looking down as eyes are symmetrical about the nose.
+    looking_down = pose_during_ball_contact["rightEyeX"] - pose_during_ball_contact["noseX"] == approx(
+        pose_during_ball_contact["noseX"] - pose_during_ball_contact["leftEyeX"], rel=0.01
+    )
+
+    if not looking_down:
+        return "Make sure to keep your head down during your swing - -keep your eyes on that ball!"
 
 def get_first_two_coordinates_of_ball_flight(
     data: pd.DataFrame,
@@ -402,4 +439,9 @@ def body_parts_at_specified_timestamp(swingObject, timestamp):
     timestamped_metrics["leftAnkleY"] = swingObject.ankle_metrics[timestamp][1]
     timestamped_metrics["rightAnkleX"] = swingObject.ankle_metrics[timestamp][2]
     timestamped_metrics["rightAnkleY"] = swingObject.ankle_metrics[timestamp][3]
+    timestamped_metrics["leftEyeX"] = swingObject.eye_metrics[timestamp][0]
+    timestamped_metrics["rightEyeX"] = swingObject.eye_metrics[timestamp][1]
+    timestamped_metrics["noseX"] = swingObject.nose_metrics[timestamp][0]
+    timestamped_metrics["noseY"] = swingObject.nose_metrics[timestamp][1]
+
     return timestamped_metrics
