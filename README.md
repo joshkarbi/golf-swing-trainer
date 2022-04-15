@@ -3,7 +3,7 @@ A mobile app that analyzes user golf swings and provides advice on how to improv
 
 ## App Screenshots ##
 
-<img src="/docs/app_screenshots.png" width="600" />
+<img src="/docs/app_screenshots.png" width="900" />
 
 ## Swing Analysis Visualization ##
 
